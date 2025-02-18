@@ -69,9 +69,12 @@ void sphere(float radius, int slices, int stacks, char* file){
 }
 
 int main(int argc, char** argv){
-	if(strcmp(argv[1],"plane")){
-		plane(atof(argv[2]),atoi(argv[3]), argv[4]);
+	if(strcmp(argv[1],"plane")==0){
+		plane(atof(argv[2]),atof(argv[3]), argv[4]);
 	}
+    else if(strcmp(argv[1],"sphere") == 0){
+        sphere(atof(argv[2]),atof(argv[3]),atof(argv[4]),argv[5]);
+    }
 
 	return 0;
 }
