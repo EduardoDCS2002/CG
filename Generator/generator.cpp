@@ -9,23 +9,127 @@ void plane(float length,int divisions, char* file){
 	int vertices = divisions * divisions * 2 * 3;
 	fprintf(fd,"%d\n",vertices);
 	float espacamento = length/((float)divisions);
-	float ponto1[3];
+	float ponto[3];
 	for(int i=0; i < divisions;i++){
 		for(int j=0;j<divisions;j++){
-			ponto1[0] = -0.5 * length + j * espacamento;
-			ponto1[1] = 0;
-			ponto1[2] = 0.5 * length - i * espacamento;
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1], ponto1[2]);
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]);
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
+			ponto[0] = -0.5 * length + j * espacamento;
+			ponto[1] = 0;
+			ponto[2] = 0.5 * length - i * espacamento;
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
 
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1],ponto1[2]);
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1],ponto1[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
 
 		}	
 	}
-	fprintf(fd, "%f\n %d\n", length, divisions);
+	fclose(fd);
+}
+
+void box(float dimension, int divisions, char* file){
+	//requires dimension, and the number of divisions per edge, centred in the origin
+	//nrvertices
+	//vertices
+	FILE *fd = fopen(file, "w+");
+	int vertices = divisions * divisions * divisions * 6;
+	fprintf(fd,"%d\n",vertices);
+	float espacamento = dimension/((float)divisions);
+	float ponto[3];
+	//planos no xy
+	for(int i=0; i<divisions;i++){
+		for(int j=0;j<divisions;j++){
+			ponto[0] = -0.5 * dimension + j * espacamento;
+			ponto[1] = 0.5 * dimension - i * espacamento;
+			ponto[2] = -(dimension/2);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]-espacamento,ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
+		}
+	}
+	for(int i=0; i<divisions;i++){
+		for(int j=0;j<divisions;j++){
+			ponto[0] = -0.5 * dimension + j * espacamento;
+			ponto[1] = 0.5 * dimension - i * espacamento;
+			ponto[2] = (dimension/2);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]-espacamento,ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
+		}
+	}
+	
+	//planos no xz
+	for(int i=0; i < divisions;i++){
+		for(int j=0;j<divisions;j++){
+			ponto[0] = -0.5 * dimension + j * espacamento;
+			ponto[1] = -(dimension/2);
+			ponto[2] = 0.5 * dimension - i * espacamento;
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
+		}
+	}
+	for(int i=0; i < divisions;i++){
+		for(int j=0;j<divisions;j++){
+			ponto[0] = -0.5 * dimension + j * espacamento;
+			ponto[1] = dimension/2;
+			ponto[2] = 0.5 * dimension - i * espacamento;
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
+			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
+
+		}	
+	}
+	//planos no yz
+	for(int i=0; i < divisions;i++){
+		for(int j=0;j<divisions;j++){
+			ponto[0] = -(dimension/2);
+			ponto[1] = -0.5 * dimension + j * espacamento;
+			ponto[2] = 0.5 * dimension - i * espacamento;
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
+
+		}	
+	}
+	for(int i=0; i < divisions;i++){
+		for(int j=0;j<divisions;j++){
+			ponto[0] = (dimension/2);
+			ponto[1] = -0.5 * dimension + j * espacamento;
+			ponto[2] = 0.5 * dimension - i * espacamento;
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
+
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
+			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
+
+		}	
+	}
 	fclose(fd);
 }
 

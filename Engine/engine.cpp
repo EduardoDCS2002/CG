@@ -42,7 +42,7 @@ void readXML(string file) {
 	string s;
 
 	
-	string path = "/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/test_files/test_files_phase_1/" + file;
+	string path = "/home/meerkatedu/CG/CG/test_files/test_files_phase_1/" + file;
 	if (!(xml.LoadFile((path).c_str())) && 
 	!(xmltv.LoadFile((path).c_str()))) {
 		
@@ -64,16 +64,16 @@ void readXML(string file) {
         while (elemento3 != nullptr) {
 			
             if (strcmp(elemento3->Attribute("file"), "sphere.3d") == 0) {
-                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/sphere.3d");
+                readFile("/home/meerkatedu/CG/CG/sphere.3d");
             }
             if (strcmp(elemento3->Attribute("file"), "cone.3d") == 0) {
-                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/cone.3d");
+                readFile("/home/meerkatedu/CG/CG/cone.3d");
             }
             if (strcmp(elemento3->Attribute("file"), "plane.3d") == 0) {
-                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/plane.3d");
+                readFile("/home/meerkatedu/CG/CG/plane.3d");
             }
             if (strcmp(elemento3->Attribute("file"), "box.3d") == 0) {
-                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/box.3d");
+                readFile("/home/meerkatedu/CG/CG/box.3d");
             }
             elemento3 = elemento3->NextSiblingElement();
         }
