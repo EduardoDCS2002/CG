@@ -176,6 +176,9 @@ int main(int argc, char** argv){
     else if(strcmp(argv[1],"sphere") == 0){
         sphere(atof(argv[2]),atof(argv[3]),atof(argv[4]),argv[5]);
     }
+	else if(strcmp(argv[1], "box")==0){
+		box(atof(argv[2]),atoi(argv[3]), argv[4]);
+	}
 
 	return 0;
 }
