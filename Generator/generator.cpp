@@ -77,7 +77,7 @@ void box(float dimension, int divisions, char* file){
 	//nrvertices
 	//vertices
 	FILE *fd = fopen(file, "w+");
-	int vertices = divisions * divisions * divisions * 6 * 2;
+	int vertices = divisions * divisions * 2 * 3 * 6;
 	fprintf(fd,"%d\n",vertices);
 	float espacamento = dimension/((float)divisions);
 	float ponto[3];
@@ -178,6 +178,37 @@ void box(float dimension, int divisions, char* file){
 	fclose(fd);
 }
 
+void cone(float radius, float height, int slices, int stacks, char *file){
+	//nrvertices
+	int vertices = 6 * stacks * slices + 3 * slices;
+	FILE *fd = fopen(file, "w+");
+	fprintf(fd,"%d\n", vertices);
+	float angle = 2 * M_PI / slices;
+	float height_change = height / stacks;
+    float radius_change = radius / stacks;
+	//faces
+	for (int i = 0; i < stacks; i++) {
+        float current_height = height - height_change * i;
+        float current_radius = i * radius_change;
+        for (int j = 0; j < slices; j++) {
+			fprintf(fd, "%f %f %f\n",current_radius * sin(angle * j),current_height,current_radius * cos(angle * j));
+			fprintf(fd, "%f %f %f\n",(current_radius+radius_change) * sin(angle * j),current_height-height_change,(current_radius+radius_change) * cos(angle * j));
+			fprintf(fd, "%f %f %f\n",(current_radius+radius_change) * sin(angle * (j+1)),current_height-height_change,(current_radius+radius_change) * cos(angle * (j+1)));
+
+			fprintf(fd, "%f %f %f\n",current_radius * sin(angle * j),current_height,current_radius * cos(angle * j));
+			fprintf(fd, "%f %f %f\n",(current_radius+radius_change) * sin(angle * (j+1)),current_height-height_change,(current_radius+radius_change) * cos(angle * (j+1)));
+			fprintf(fd, "%f %f %f\n",current_radius * sin(angle * (j+1)),current_height,current_radius * cos(angle * (j+1)));
+        }
+    }
+	//circunferencia
+	for(int i = 0;i < slices; i++){
+		fprintf(fd, "%f %f %f\n",radius * sin(angle * i),0.0,radius * cos(angle * i));
+		fprintf(fd, "%f %f %f\n",0.0,0.0,0.0);
+		fprintf(fd, "%f %f %f\n",radius * sin(angle * (i+1)),0.0,radius * cos(angle * (i+1)));
+	}
+}
+
+
 int main(int argc, char** argv){
 	if(strcmp(argv[1],"plane")==0){
 		plane(atof(argv[2]),atof(argv[3]), argv[4]);
@@ -188,6 +219,8 @@ int main(int argc, char** argv){
 	else if(strcmp(argv[1],"box") == 0){
         box(atof(argv[2]),atof(argv[3]), argv[4]);
     }
-
+	else if(strcmp(argv[1],"cone") == 0){
+        cone(atof(argv[2]),atof(argv[3]), atof(argv[4]), atof(argv[5]), argv[6]);
+    }
 	return 0;
 }
