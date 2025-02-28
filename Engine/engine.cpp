@@ -1,7 +1,7 @@
 #include "engine.hpp"
 
 float camX, camY, camZ;  //posicao x,y,z da camara
-int alpha = 0, beta = 0, r = 20;      // angulos e raio da camara
+int alpha = 0, beta1 = 0, r = 20;      // angulos e raio da camara
 int xInicial, yInicial, modoRato = 0;   //posicoes anteriores da camara e modo da mesma
 double lookX;
 double lookY;
@@ -42,12 +42,12 @@ void readXML(string file) {
 	string s;
 
 	
-	string path = "/home/meerkatedu/CG/CG/test_files/test_files_phase_1/" + file;
+	string path = "/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/test_files/test_files_phase_1/" + file;
 	if (!(xml.LoadFile((path).c_str())) && 
 	!(xmltv.LoadFile((path).c_str()))) {
 		
 		cout << "Ficheiro lido com sucesso" << endl;
-		//Para o .3d
+		
 		XMLElement* elemento = xml.FirstChildElement("world")->FirstChildElement("group");
 		if (elemento == nullptr) {
 			cout << "No Root Found\n" << endl;
@@ -64,16 +64,16 @@ void readXML(string file) {
         while (elemento3 != nullptr) {
 			
             if (strcmp(elemento3->Attribute("file"), "sphere.3d") == 0) {
-                readFile("/home/meerkatedu/CG/CG/sphere.3d");
+                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/sphere.3d");
             }
             if (strcmp(elemento3->Attribute("file"), "cone.3d") == 0) {
-                readFile("/home/meerkatedu/CG/CG/cone.3d");
+                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/cone.3d");
             }
             if (strcmp(elemento3->Attribute("file"), "plane.3d") == 0) {
-                readFile("/home/meerkatedu/CG/CG/plane.3d");
+                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/plane.3d");
             }
             if (strcmp(elemento3->Attribute("file"), "box.3d") == 0) {
-                readFile("/home/meerkatedu/CG/CG/box.3d");
+                readFile("/mnt/c/Users/diogo/Desktop/Trabalho_CG/CG/box.3d");
             }
             elemento3 = elemento3->NextSiblingElement();
         }
@@ -104,8 +104,6 @@ void readXML(string file) {
         fov = atof(tv5->Attribute("fov"));
         near = atof(tv5->Attribute("near"));
         far = atof(tv5->Attribute("far"));
-
-
 	}
 	else {
 		cout << "Erro ao ler o xml" << endl;
@@ -113,10 +111,8 @@ void readXML(string file) {
 	return;
 }
 
-float cameraY = 5.0f;
-
 void draw() {
-	for (auto it = pontosLista.begin(); it != pontosLista.end(); ) {
+	for (auto it = pontosLista.begin(); it != pontosLista.end(); ){
 		glBegin(GL_TRIANGLES);
 		glVertex3f(it->getX(), it->getY(), it->getZ());
 		++it;
@@ -226,6 +222,59 @@ void processKeys(unsigned char key, int xx, int yy) {
 	}
 }
 
+void processMouseButtons(int button, int state, int x, int y){
+	switch (state){
+		case GLUT_DOWN:
+			xInicial = x;
+			yInicial = y;
+			if (button == GLUT_LEFT_BUTTON)		modoRato = 1; //rodar camara
+			else if (button == GLUT_RIGHT_BUTTON)  modoRato = 2; //aproximar ou afastar camara
+			else modoRato = 0;
+			break;
+
+		case GLUT_UP:
+			if (modoRato == 1) { // muda alpha e beta pois este modo muda a posicao
+				alpha += (x - xInicial); 
+				beta1 +=1;
+			}
+			else if (modoRato == 2) { //muda raio pois este modo muda o zoom
+				r -= y - yInicial;
+				if (r < 3) r = 3.0;
+			}
+			break;
+	}
+}
+
+void processMouseMotion(int x, int y){
+	int xAux, yAux;
+	int alphaAux, betaAux;
+	int rAux;
+
+	if (!modoRato) return;
+
+	xAux = x - xInicial;
+	yAux = y - yInicial;
+
+	if (modoRato == 1) {
+
+		alphaAux = alpha + xAux;
+		betaAux = beta1 + yAux;
+		if (betaAux > 90.0) betaAux = 90.0;
+		else if (betaAux < -90.0) betaAux = -90.0;
+		rAux = r;
+	}
+	else if (modoRato == 2) {
+
+		alphaAux = alpha;
+		betaAux = beta1;
+		rAux = r - yAux;
+		if (rAux < 3) rAux = 3;
+	}
+	//nova posicao x,y,z da camara
+	camX = rAux * sin(-alphaAux * M_PI / 180.0) * cos(betaAux * M_PI / 180.0);
+	camZ = rAux * cos(-alphaAux * M_PI / 180.0) * cos(betaAux * M_PI / 180.0);
+	camY = rAux * sin(betaAux * M_PI / 180.0);
+}
 
 void processSpecialKeys(int key, int xx, int yy) {
 
@@ -235,7 +284,6 @@ void processSpecialKeys(int key, int xx, int yy) {
 
 
 int main(int argc, char** argv) {
-
     if (argc == 2) {
 		readXML(argv[1]);
 	}
@@ -267,13 +315,14 @@ int main(int argc, char** argv) {
 	
 
 	// Callback registration for keyboard processing
+	glutMouseFunc(processMouseButtons);
+	glutMotionFunc(processMouseMotion);
 	glutKeyboardFunc(processKeys);
-	//glutSpecialFunc(processSpecialKeys);
 
 	//  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);				//see through if disable
-
+	glEnable(GL_CULL_FACE);		//see through if disable
+	
 	// enter GLUT's main cycle
 	glutMainLoop();
 
