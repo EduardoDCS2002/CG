@@ -12,6 +12,7 @@ double upZ;
 int fov;
 int near;
 double far;
+int typeDraw = GL_LINE;
 
 list<Ponto> pontosLista;
 
@@ -171,7 +172,7 @@ void renderScene(void) {
 
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, typeDraw);
 
 	// set the camera
 	glLoadIdentity();
@@ -219,6 +220,15 @@ void processKeys(unsigned char key, int xx, int yy) {
 			camZ -= 0.1f;
 			lookZ -= 0.1f;
 			break;
+		case 'f' | 'F':
+			typeDraw = GL_FILL;
+			break;
+		case 'p' | 'P':
+			typeDraw = GL_POINT;
+			break;
+		case 'l' | 'L':
+			typeDraw = GL_LINE;
+			break;
 	}
 }
 
@@ -233,11 +243,11 @@ void processMouseButtons(int button, int state, int x, int y){
 			break;
 
 		case GLUT_UP:
-			if (modoRato == 1) { // muda alpha e beta pois este modo muda a posicao
+			if (modoRato == 1) { 
 				alpha += (x - xInicial); 
 				beta1 +=1;
 			}
-			else if (modoRato == 2) { //muda raio pois este modo muda o zoom
+			else if (modoRato == 2) { 
 				r -= y - yInicial;
 				if (r < 3) r = 3.0;
 			}
@@ -276,12 +286,6 @@ void processMouseMotion(int x, int y){
 	camY = rAux * sin(betaAux * M_PI / 180.0);
 }
 
-void processSpecialKeys(int key, int xx, int yy) {
-
-	// put code to process special keys in here
-
-}
-
 
 int main(int argc, char** argv) {
     if (argc == 2) {
@@ -290,16 +294,6 @@ int main(int argc, char** argv) {
 	else {
 		readXML("test_1_5.xml");
 	}
-
-	// init GLUT and the window
-	/*
-	cout << "Printing all coordinates from pontosLista:" << endl;
-    for (Ponto ponto : pontosLista) {
-        cout << "Vertex: (" << ponto.getX() 
-             << ", " << ponto.getY() 
-             << ", " << ponto.getZ() << ")" << endl;
-    }
-	*/
 
 	glutInit(&argc, argv);
 	

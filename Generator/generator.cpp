@@ -38,7 +38,7 @@ void plane(float length,int divisions, char* file){
 
 void sphere(float radius, int slices, int stacks, char* file){
 	FILE *fd = fopen(file,"w+");
-	int vertices = 6 * (slices * stacks + slices);
+	int vertices = slices * (6 + (stacks * 6));  
 	fprintf(fd, "%d\n", vertices );
 
 	float lat = 2 * M_PI / slices;
