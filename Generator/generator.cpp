@@ -32,7 +32,6 @@ void plane(float length,int divisions, char* file){
 			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
 		}	
 	}
-	fprintf(fd, "%f\n %d\n", length, divisions);
 	fclose(fd);
 }
 
@@ -68,7 +67,6 @@ void sphere(float radius, int slices, int stacks, char* file){
 			fprintf(fd, "%f %f %f\n",radius * cos(currentlon) * sin(currentlat + lat),		radius * sin(currentlon),			radius * cos(currentlon) * cos(currentlat+lat));
 		}
 	}
-	fprintf(fd, "%f\n%d\n%d\n", radius,slices,stacks);
 	fclose(fd);
 }
 

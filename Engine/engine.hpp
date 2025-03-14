@@ -61,3 +61,96 @@ public:
 		z = c;
 	}
 };
+
+class Group{
+	public:
+		list<int> pais;
+		list<Group> subgroups;
+		list<Ponto> pontos;
+		string model;
+		int nr;
+		float rotation[4];
+		float scale[3];
+		float translation[3];
+	
+		Group(string model, int nr){
+			this->nr = nr;
+			this->model = model;
+			for(int i = 0;i<4;i++){
+				this->rotation[i] = 0.0f;
+			}
+			for(int i = 0;i<3;i++){
+				this->scale[i] = 0.0f;
+				this->translation[i] = 0.0f;
+			}
+			
+		}
+
+		//GETS
+		int getnr(){
+			return nr;
+		}
+		string getModel(){
+			return model;
+		}
+		
+		void getRotation(float outRotation[4]){
+			for(int i = 0; i < 4; i++)
+				outRotation[i] = rotation[i];
+		}
+
+		void getScale(float outScale[4]){
+			for(int i = 0; i < 3; i++)
+				outScale[i] = scale[i];
+		}
+
+		void getTranslation(float outTranslation[4]){
+			for(int i = 0; i < 4; i++)
+				outTranslation[i] = translation[i];
+		}
+		
+		list<Group> getSubgroups(){       
+			return subgroups;
+		}
+		list<Ponto> getPontos(){
+			return pontos;
+		}
+
+		//SETS
+		void setpais(list<int> newpais){
+			pais = newpais;
+		}
+		void setnr(int newnr){
+			nr = newnr;
+		}
+		void setModel(const string& newModel){
+			model = newModel;
+		}
+
+		void setRotation(float newRotation[4]){
+			for (int i = 0; i < 4; i++){
+				rotation[i] = newRotation[i];
+			}
+		}
+
+		void setScale(float newScale[3]){
+			for (int i = 0; i < 3; i++){
+				scale[i] = newScale[i];
+			}
+		}
+
+		void setTranslation(float newTranslation[3]){
+			for (int i = 0; i < 3; i++){
+				translation[i] = newTranslation[i];
+			}
+			
+		}
+
+		// métodos das listas
+		void addSubgroup(Group subgroup) {
+			this->subgroups.push_back(subgroup);
+		}
+		void addPonto(Ponto ponto) {
+			this->pontos.push_back(ponto);
+		}
+};

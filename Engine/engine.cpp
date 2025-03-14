@@ -1,5 +1,7 @@
 #include "engine.hpp"
 
+list<Group> mainGrupos;
+int nrgroupcounter = 0;
 float camX, camY, camZ;  //posicao x,y,z da camara
 int alpha = 0, beta1 = 0, r = 20;      // angulos e raio da camara
 int xInicial, yInicial, modoRato = 0;   //posicoes anteriores da camara e modo da mesma
@@ -14,9 +16,11 @@ int near;
 double far;
 int typeDraw = GL_LINE;
 
-list<Ponto> pontosLista;
+int timebase = 0;
+float frame = 0;
+float fps;
 
-void readFile(string caminho3d) {
+void readFile(string caminho3d, Group group) {
 	string linha;
 	vector<string> coordenadas;
 
@@ -31,10 +35,62 @@ void readFile(string caminho3d) {
 			vector<string> result{
 				istream_iterator<string>(ss), {}
 			};
-			pontosLista.push_back(Ponto(stof(result[0]), stof(result[1]), stof(result[2])));
+			group.getPontos().push_back(Ponto(stof(result[0]), stof(result[1]), stof(result[2])));
 		}
 	}
 	else { cout << "Erro ao ler o ficheiro .3d" << endl;}
+}
+
+void readXMLgroups(XMLElement* group, list<int> listapais){
+	for(XMLElement* childgroup = group->FirstChildElement("group");childgroup != nullptr; childgroup = childgroup->NextSiblingElement("group")){
+		if(childgroup){
+			nrgroupcounter++;
+			string filename;
+			//MODELS
+			XMLElement* models = childgroup->FirstChildElement("models");
+			if(models){
+				XMLElement* model = models->FirstChildElement("model");
+
+				while (model != nullptr) {
+			
+					if (strcmp(model->Attribute("file"), "sphere.3d") == 0) {
+						readFile("sphere.3d");
+					}
+					if (strcmp(model->Attribute("file"), "cone.3d") == 0) {
+						readFile("cone.3d");
+					}
+					if (strcmp(model->Attribute("file"), "plane.3d") == 0) {
+						readFile("plane.3d");
+					}
+					if (strcmp(model->Attribute("file"), "box.3d") == 0) {
+						readFile("box.3d");
+					}
+					model = model->NextSiblingElement();
+				}
+				filename = model->Attribute("file");
+
+			}
+			//TRANSFORM
+			XMLElement* transform = childgroup->FirstChildElement("transform");
+			
+			if(transform){
+				XMLElement* translate = transform->FirstChildElement("translate");
+				if(translate){
+					float x = translate->FloatAttribute("x");
+					float y = translate->FloatAttribute("y");
+					float z = translate->FloatAttribute("z");
+					//TODO save translation in group
+					//
+				}
+			}
+			Group grupo = Group(filename, nrgroupcounter);
+			grupo.setpais(listapais);
+			mainGrupos.emplace_back(grupo);
+			listapais.emplace_back(grupo.getnr());
+			
+			readXMLgroups(childgroup, listapais);
+		}
+	}
 }
 
 void readXML(string file) {
@@ -44,85 +100,123 @@ void readXML(string file) {
 
 	
 	string path = "test_files/test_files_phase_1/" + file;
-	if (!(xml.LoadFile((path).c_str())) && 
-	!(xmltv.LoadFile((path).c_str()))) {
-		
+	if (!xml.LoadFile(path.c_str())) {
 		cout << "Ficheiro lido com sucesso" << endl;
+	}
+
+
+	//WORLD
+	XMLElement* world = xml.FirstChildElement("world");
+	if (world == nullptr) {
+		cout << "No Root Found\n" << endl;
+	}
+
+	//CAMARA
+	XMLElement* camera = world->FirstChildElement("camera");
+
+	if(camera){
+		XMLElement* position = camera->FirstChildElement("position");
+		XMLElement* lookAt = camera->FirstChildElement("lookAt");
+		XMLElement* up = camera->FirstChildElement("up");
+		XMLElement* projection = camera->FirstChildElement("projection");
 		
-		XMLElement* elemento = xml.FirstChildElement("world")->FirstChildElement("group");
-		if (elemento == nullptr) {
-			cout << "No Root Found\n" << endl;
+		//POSITION
+		if(position){
+			camX = atof(position->Attribute("x"));
+			camY = atof(position->Attribute("y"));
+			camZ = atof(position->Attribute("z"));
+			xInicial = camX;
+        	yInicial = camY;
 		}
-		XMLElement* elemento2 = elemento->FirstChildElement("models");
-		if (elemento2 == nullptr) {
-			cout << "No Root Found\n" << endl;
+		//LOOKAT
+		if(lookAt){
+			lookX = atof(lookAt->Attribute("x"));
+			lookY = atof(lookAt->Attribute("y"));
+			lookZ = atof(lookAt->Attribute("z"));
 		}
-		XMLElement* elemento3 = elemento2->FirstChildElement("model");
-		if (elemento3 == nullptr) {
-			cout << "No Root Found\n" << endl;
+		//UP
+		if(up){
+			upX = atof(up->Attribute("x"));
+			upY = atof(up->Attribute("y"));
+			upZ = atof(up->Attribute("z"));
 		}
-		
-        while (elemento3 != nullptr) {
+		//PROJECTION
+		if(projection){
+			fov = atof(projection->Attribute("fov"));
+			near = atof(projection->Attribute("near"));
+			far = atof(projection->Attribute("far"));
+		}
+	}
+
+	//GROUP
+	for(XMLElement* group = world->FirstChildElement("group");group != nullptr; group = group->NextSiblingElement("group")){
+		if(group){
+			list<int> listapais;
+			nrgroupcounter++;
+			string filename;
+			//MODELS
+			XMLElement* models = group->FirstChildElement("models");
+			if(models){
+				XMLElement* model = models->FirstChildElement("model");
+
+				while (model != nullptr) {
 			
-            if (strcmp(elemento3->Attribute("file"), "sphere.3d") == 0) {
-                readFile("sphere.3d");
-            }
-            if (strcmp(elemento3->Attribute("file"), "cone.3d") == 0) {
-                readFile("cone.3d");
-            }
-            if (strcmp(elemento3->Attribute("file"), "plane.3d") == 0) {
-                readFile("plane.3d");
-            }
-            if (strcmp(elemento3->Attribute("file"), "box.3d") == 0) {
-                readFile("box.3d");
-            }
-            elemento3 = elemento3->NextSiblingElement();
-        }
-		
+					if (strcmp(model->Attribute("file"), "sphere.3d") == 0) {
+						readFile("sphere.3d");
+					}
+					if (strcmp(model->Attribute("file"), "cone.3d") == 0) {
+						readFile("cone.3d");
+					}
+					if (strcmp(model->Attribute("file"), "plane.3d") == 0) {
+						readFile("plane.3d");
+					}
+					if (strcmp(model->Attribute("file"), "box.3d") == 0) {
+						readFile("box.3d");
+					}
+					model = model->NextSiblingElement();
+				}
+				filename = model->Attribute("file");
 
-		//Camara
-		XMLElement* tv = xmltv.FirstChildElement("world")->FirstChildElement("camera");
-		XMLElement* tv2 = tv->FirstChildElement("position");
-        XMLElement* tv3 = tv->FirstChildElement("lookAt");
-        XMLElement* tv4 = tv->FirstChildElement("up");
-        XMLElement* tv5 = tv->FirstChildElement("projection");
-
-		camX = atof(tv2->Attribute("x"));
-		camY = atof(tv2->Attribute("y"));
-		camZ = atof(tv2->Attribute("z"));
-
-        xInicial = camX;
-        yInicial = camY;
-
-        lookX = atof(tv3->Attribute("x"));
-        lookY = atof(tv3->Attribute("y"));
-        lookZ = atof(tv3->Attribute("z"));
-
-        upX = atof(tv4->Attribute("x"));
-        upY = atof(tv4->Attribute("y"));
-        upZ = atof(tv4->Attribute("z"));
-
-        fov = atof(tv5->Attribute("fov"));
-        near = atof(tv5->Attribute("near"));
-        far = atof(tv5->Attribute("far"));
+			}
+			//TRANSFORM
+			XMLElement* transform = group->FirstChildElement("transform");
+			
+			if(transform){
+				XMLElement* translate = transform->FirstChildElement("translate");
+				if(translate){
+					float x = translate->FloatAttribute("x");
+					float y = translate->FloatAttribute("y");
+					float z = translate->FloatAttribute("z");
+					//TODO save translation in group
+					//
+				}
+			}
+			Group grupo = Group(filename, nrgroupcounter);
+			listapais.emplace_back(grupo.getnr());
+			mainGrupos.emplace_back(grupo);
+			readXMLgroups(group, listapais);
+	
+			
+		}
 	}
-	else {
-		cout << "Erro ao ler o xml" << endl;
-	}
-	return;
+
 }
 
-void draw() {
-	for (auto it = pontosLista.begin(); it != pontosLista.end(); ){
-		glBegin(GL_TRIANGLES);
-		glVertex3f(it->getX(), it->getY(), it->getZ());
-		++it;
-		glVertex3f(it->getX(), it->getY(), it->getZ());
-		++it;
-		glVertex3f(it->getX(), it->getY(), it->getZ());
-		++it;
-		glEnd();
-	}
+
+void draw(list<Group> mainGrupos){
+	for (auto itgroup = mainGrupos.begin(); itgroup != mainGrupos.end();){
+		list<Ponto> pontosatual = itgroup.getPontos();
+		for (auto it = pontosatual.begin(); it != pontosatual.end(); ){
+			glBegin(GL_TRIANGLES);
+			glVertex3f(it->getX(), it->getY(), it->getZ());
+			++it;
+			glVertex3f(it->getX(), it->getY(), it->getZ());
+			++it;
+			glVertex3f(it->getX(), it->getY(), it->getZ());
+			++it;
+			glEnd();
+		}
+    }
 }
 
 void eixos() {
@@ -170,6 +264,19 @@ void changeSize(int w, int h) {
 
 void renderScene(void) {
 
+	frame++;
+	int time = glutGet(GLUT_ELAPSED_TIME);
+
+	if (time - timebase > 1000) {
+		fps = frame*1000.0/(time-timebase);
+		timebase = time;
+		frame = 0;
+
+		char title[50];
+		sprintf(title, "FPS: %.2f", fps);
+		glutSetWindowTitle(title);
+	}
+
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, typeDraw);
@@ -182,7 +289,7 @@ void renderScene(void) {
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 
-	draw();
+	draw(mainGrupos);
 	
 	eixos();
 	
