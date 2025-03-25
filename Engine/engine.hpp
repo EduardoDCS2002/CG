@@ -64,23 +64,21 @@ public:
 
 class Group{
 	public:
-		list<int> pais;
+		
 		list<Group> subgroups;
 		list<Ponto> pontos;
-		string model;
 		int nr;
 		float rotation[4];
 		float scale[3];
 		float translation[3];
 	
-		Group(string model, int nr){
+		Group(int nr){
 			this->nr = nr;
-			this->model = model;
 			for(int i = 0;i<4;i++){
 				this->rotation[i] = 0.0f;
 			}
 			for(int i = 0;i<3;i++){
-				this->scale[i] = 0.0f;
+				this->scale[i] = 1.0f;
 				this->translation[i] = 0.0f;
 			}
 			
@@ -90,22 +88,19 @@ class Group{
 		int getnr(){
 			return nr;
 		}
-		string getModel(){
-			return model;
-		}
 		
 		void getRotation(float outRotation[4]){
 			for(int i = 0; i < 4; i++)
 				outRotation[i] = rotation[i];
 		}
 
-		void getScale(float outScale[4]){
+		void getScale(float outScale[3]){
 			for(int i = 0; i < 3; i++)
 				outScale[i] = scale[i];
 		}
 
-		void getTranslation(float outTranslation[4]){
-			for(int i = 0; i < 4; i++)
+		void getTranslation(float outTranslation[3]){
+			for(int i = 0; i < 3; i++)
 				outTranslation[i] = translation[i];
 		}
 		
@@ -113,18 +108,16 @@ class Group{
 			return subgroups;
 		}
 		list<Ponto> getPontos(){
-			return pontos;
+			return this->pontos;
 		}
 
 		//SETS
-		void setpais(list<int> newpais){
-			pais = newpais;
+		void setPontos(list<Ponto> npontos){
+			this->pontos = npontos;
 		}
+
 		void setnr(int newnr){
 			nr = newnr;
-		}
-		void setModel(const string& newModel){
-			model = newModel;
 		}
 
 		void setRotation(float newRotation[4]){
