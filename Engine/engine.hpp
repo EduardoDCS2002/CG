@@ -65,7 +65,7 @@ public:
 class Group{
 	public:
 		
-		list<Group> subgroups;
+		list<Group*> subgroups;
 		list<Ponto> pontos;
 		int nr;
 		float rotation[4];
@@ -104,7 +104,7 @@ class Group{
 				outTranslation[i] = translation[i];
 		}
 		
-		list<Group> getSubgroups(){       
+		list<Group*> getSubgroups(){       
 			return subgroups;
 		}
 		list<Ponto> getPontos(){
@@ -140,7 +140,7 @@ class Group{
 		}
 
 		// métodos das listas
-		void addSubgroup(Group subgroup) {
+		void addSubgroup(Group* subgroup) {
 			this->subgroups.push_back(subgroup);
 		}
 		void addPonto(Ponto ponto) {

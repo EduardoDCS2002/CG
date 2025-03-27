@@ -1,6 +1,6 @@
 #include "engine.hpp"
 
-list<Group> mainGrupos;
+list<Group*> mainGrupos;
 int nrgroupcounter = 0;
 float camX, camY, camZ;  //posicao x,y,z da camara
 int alpha = 0, beta1 = 0, r = 20;      // angulos e raio da camara
@@ -26,7 +26,6 @@ void readFile(string caminho3d, Group* group) {
 	cout<< caminho3d<<endl;
 	ifstream file(caminho3d);
 	if (file.is_open()) {
-		cout << "potato" << endl;
 		getline(file, linha);                   
 		int nLinhas = atoi(linha.c_str());
 		list<Ponto> pontos;
@@ -54,43 +53,39 @@ void readFile(string caminho3d, Group* group) {
 }
 
 void readXMLgroups(XMLElement* group, Group* pai){
-	cout<<"chegou no readXMLgroups galera"<<endl;
 	for(XMLElement* childgroup = group;childgroup != nullptr; childgroup = childgroup->NextSiblingElement("group")){
 		if(childgroup){
-			Group grupo = Group(nrgroupcounter);
-			nrgroupcounter++;
-			
+			Group* grupo = new Group(nrgroupcounter++);
 			//MODELS
 			XMLElement* models = childgroup->FirstChildElement("models");
 			if(models){
-				cout<<"chegou no segundo if do readxmlgroups galera"<<endl;
+				cout<<"Entrou no models"<<endl;
 				XMLElement* model = models->FirstChildElement("model");
 
 				while (model != nullptr) {
-					cout<<"chegou no while galera"<<endl;
+					cout<<"Entrou no model"<<endl;
 					if (strcmp(model->Attribute("file"), "sphere.3d") == 0) {
-						readFile("sphere.3d", &grupo);
+						readFile("sphere.3d", grupo);
 					}
 					if (strcmp(model->Attribute("file"), "cone.3d") == 0) {
-						readFile("cone.3d", &grupo);
+						readFile("cone.3d", grupo);
 					}
 					if (strcmp(model->Attribute("file"), "plane.3d") == 0) {
-						readFile("plane.3d", &grupo);
+						readFile("plane.3d", grupo);
 					}
 					if (strcmp(model->Attribute("file"), "box.3d") == 0) {
-						readFile("box.3d", &grupo);
+						readFile("box.3d", grupo);
 					}
-					cout<<"chega aqui e ao pai"<<endl;
 					model = model->NextSiblingElement();
 				}
 
 			}
 			//TRANSFORM
 			
-			cout<<"antes do if transform"<<endl;
+			
 			XMLElement* transform = childgroup->FirstChildElement("transform");
 			if(transform){
-				cout<<"pode ser"<<endl;
+				cout<<"Entrou no transform"<<endl;
 				XMLElement* rotate = transform->FirstChildElement("rotate");
 				if(rotate){
 					float r[4] ={
@@ -99,7 +94,7 @@ void readXMLgroups(XMLElement* group, Group* pai){
 						rotate->FloatAttribute("y"),
 						rotate->FloatAttribute("z")
 					};
-					grupo.setRotation(r);
+					grupo->setRotation(r);
 				}
 
 				XMLElement* translate = transform->FirstChildElement("translate");
@@ -109,7 +104,7 @@ void readXMLgroups(XMLElement* group, Group* pai){
 						translate->FloatAttribute("y"),
 						translate->FloatAttribute("z")
 					};
-					grupo.setTranslation(t);
+					grupo->setTranslation(t);
 				}
 				
 				XMLElement* scale = transform->FirstChildElement("scale");
@@ -119,20 +114,21 @@ void readXMLgroups(XMLElement* group, Group* pai){
 						scale->FloatAttribute("y"),
 						scale->FloatAttribute("z")
 					};
-					grupo.setScale(s);
+					grupo->setScale(s);
 				}
 			}
 			if(pai != nullptr){
-				cout<<"banana"<<endl;
+				cout<<"Tem pai"<<endl;
 				pai->addSubgroup(grupo);
-				cout<< pai->getSubgroups().size() <<endl;
+				cout << "Subgroups size: " << pai->getSubgroups().size() <<endl;
 			}
 			else{
 				mainGrupos.emplace_back(grupo);
 			}
-			cout<<"chega aqui e anda mi amore"<<endl;
 			if(childgroup->FirstChildElement("group")){
-				readXMLgroups(childgroup->FirstChildElement("group"), &grupo);
+				cout<<"Avança para o proximo group"<<endl;
+				readXMLgroups(childgroup->FirstChildElement("group"), grupo);
+				cout << "Primeira vez:" << &grupo << endl;
 			}
 		}
 	}
@@ -203,13 +199,13 @@ void readXML(string file) {
 }
 
 
-void draw(list<Group> mainGrupos){
+void draw(list<Group*> mainGrupos){
 	
 	for(auto grupo : mainGrupos){
 		//cout<<"olha o draw "<< grupo.getnr() <<endl;
 		
 		glPushMatrix();
-		list<Ponto> pontosatual = grupo.getPontos();
+		list<Ponto> pontosatual = grupo->getPontos();
 		/*if(pontosatual.size()>0){
 			cout << "No :C" << endl;
 		}
@@ -217,13 +213,13 @@ void draw(list<Group> mainGrupos){
 			cout<<"x: " << ponto.getX() << " y: " <<ponto.getY()<<" z: "<<ponto.getZ()<<endl;
 		}*/
 		float t[3], r[4], s[3];
-		grupo.getTranslation(t);
-		grupo.getRotation(r);
-		grupo.getScale(s);
+		grupo->getTranslation(t);
+		grupo->getRotation(r);
+		grupo->getScale(s);
 
-		glScalef(s[0],s[1],s[2]);
 		glRotatef(r[0],r[1],r[2],r[3]);
 		glTranslatef(t[0],t[1],t[2]);
+		glScalef(s[0],s[1],s[2]);
 
 		for(auto it = pontosatual.begin(); it != pontosatual.end();){
 			glBegin(GL_TRIANGLES);
@@ -235,7 +231,7 @@ void draw(list<Group> mainGrupos){
 			++it;
 			glEnd();
 		}
-		draw(grupo.getSubgroups());
+		draw(grupo->getSubgroups());
 		glPopMatrix();
     }
 }
@@ -282,7 +278,6 @@ void changeSize(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-
 void renderScene(void) {
 
 	frame++;
@@ -309,7 +304,7 @@ void renderScene(void) {
 		upX, upY, upZ);
 
 	glColor3f(1.0f, 1.0f, 1.0f);
-
+		
 	draw(mainGrupos);
 	
 	eixos();
@@ -413,6 +408,7 @@ void processMouseMotion(int x, int y){
 	camZ = rAux * cos(-alphaAux * M_PI / 180.0) * cos(betaAux * M_PI / 180.0);
 	camY = rAux * sin(betaAux * M_PI / 180.0);
 }
+
 
 
 int main(int argc, char** argv) {
