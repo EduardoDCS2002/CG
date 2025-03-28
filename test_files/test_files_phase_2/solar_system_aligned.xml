@@ -7,7 +7,7 @@
         <projection fov="60" near="1" far="10000" />
     </camera>
 
-    <!-- Sun -->
+    <!-- Sun (center of the solar system) -->
     <group>
         <transform>
             <scale x="5" y="5" z="5" />
@@ -17,10 +17,9 @@
         </models>
         
         <!-- Mercury Orbit -->
-
         <group>
             <transform>
-                <rotate angle="110" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" /> <!-- Rotation will be animated -->
                 <translate x="10" y="0" z="0" />
                 <scale x="0.4" y="0.4" z="0.4" />
             </transform>
@@ -32,7 +31,7 @@
         <!-- Venus Orbit -->
         <group>
             <transform>
-                <rotate angle="70" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" />
                 <translate x="15" y="0" z="0" />
                 <scale x="0.6" y="0.6" z="0.6" />
             </transform>
@@ -44,7 +43,7 @@
         <!-- Earth Orbit -->
         <group>
             <transform>
-                <rotate angle="80" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" />
                 <translate x="20" y="0" z="0" />
                 <scale x="0.6" y="0.6" z="0.6" />
             </transform>
@@ -52,11 +51,10 @@
                 <model file="sphere.3d" />
             </models>
             
-            <!-- Moon Orbit (27.3 day orbit, ~13.2° per day) -->
-            <!-- Position relative to Earth: ~120° -->
+            <!-- Moon Orbit -->
             <group>
                 <transform>
-                    <rotate angle="120" x="0" y="1" z="0" />
+                    <rotate angle="0" x="0" y="1" z="0" />
                     <translate x="3" y="0" z="0" />
                     <scale x="0.2" y="0.2" z="0.2" />
                 </transform>
@@ -69,7 +67,7 @@
         <!-- Mars Orbit -->
         <group>
             <transform>
-                <rotate angle="120" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" />
                 <translate x="25" y="0" z="0" />
                 <scale x="0.5" y="0.5" z="0.5" />
             </transform>
@@ -78,10 +76,10 @@
             </models>
         </group>
         
-        <!-- Jupiter -->
+        <!-- Jupiter Orbit -->
         <group>
             <transform>
-                <rotate angle="30" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" />
                 <translate x="35" y="0" z="0" />
                 <scale x="1.2" y="1.2" z="1.2" />
             </transform>
@@ -90,10 +88,10 @@
             </models>
         </group>
         
-        <!-- Saturn -->
+        <!-- Saturn Orbit -->
         <group>
             <transform>
-                <rotate angle="160" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" />
                 <translate x="45" y="0" z="0" />
                 <scale x="1.0" y="1.0" z="1.0" />
             </transform>
@@ -108,16 +106,15 @@
                     <scale x="0.2" y="0.1" z="0.2" />
                 </transform>
                 <models>
-                    <model file="torus.3d" />
+                    <model file="torus.3d" /> <!-- Assuming you have a torus model -->
                 </models>
             </group>
         </group>
         
-        <!-- Uranus -->
-        
+        <!-- Uranus Orbit -->
         <group>
             <transform>
-                <rotate angle="220" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" />
                 <translate x="55" y="0" z="0" />
                 <scale x="0.8" y="0.8" z="0.8" />
             </transform>
@@ -126,10 +123,10 @@
             </models>
         </group>
         
-        <!-- Neptune -->
+        <!-- Neptune Orbit -->
         <group>
             <transform>
-                <rotate angle="300" x="0" y="1" z="0" />
+                <rotate angle="0" x="0" y="1" z="0" />
                 <translate x="65" y="0" z="0" />
                 <scale x="0.8" y="0.8" z="0.8" />
             </transform>
