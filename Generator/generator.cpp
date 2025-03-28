@@ -206,6 +206,51 @@ void cone(float radius, float height, int slices, int stacks, char *file){
 	}
 }
 
+void torus(float inner_radius, float outer_radius, int slices, int rings, char *file) {
+    int vertices = 6 * slices * rings;
+    FILE *fd = fopen(file, "w+");
+    fprintf(fd, "%d\n", vertices);
+
+    float ring_step = 2 * M_PI / rings;
+    float slice_step = 2 * M_PI / slices;
+
+    for (int i = 0; i < rings; i++) {
+        float ring_angle = i * ring_step;
+        float next_ring_angle = (i + 1) * ring_step;
+
+        for (int j = 0; j < slices; j++) {
+            float slice_angle = j * slice_step;
+            float next_slice_angle = (j + 1) * slice_step;
+
+            // First triangle
+            float x1 = (outer_radius + inner_radius * cos(slice_angle)) * cos(ring_angle);
+            float y1 = inner_radius * sin(slice_angle);
+            float z1 = (outer_radius + inner_radius * cos(slice_angle)) * sin(ring_angle);
+
+            float x2 = (outer_radius + inner_radius * cos(slice_angle)) * cos(next_ring_angle);
+            float y2 = inner_radius * sin(slice_angle);
+            float z2 = (outer_radius + inner_radius * cos(slice_angle)) * sin(next_ring_angle);
+
+            float x3 = (outer_radius + inner_radius * cos(next_slice_angle)) * cos(next_ring_angle);
+            float y3 = inner_radius * sin(next_slice_angle);
+            float z3 = (outer_radius + inner_radius * cos(next_slice_angle)) * sin(next_ring_angle);
+
+            // Second triangle
+            float x4 = (outer_radius + inner_radius * cos(next_slice_angle)) * cos(ring_angle);
+            float y4 = inner_radius * sin(next_slice_angle);
+            float z4 = (outer_radius + inner_radius * cos(next_slice_angle)) * sin(ring_angle);
+
+            
+            fprintf(fd, "%f %f %f\n", x1, y1, z1);
+            fprintf(fd, "%f %f %f\n", x3, y3, z3);
+            fprintf(fd, "%f %f %f\n", x2, y2, z2);
+
+            fprintf(fd, "%f %f %f\n", x1, y1, z1);
+            fprintf(fd, "%f %f %f\n", x4, y4, z4);
+            fprintf(fd, "%f %f %f\n", x3, y3, z3);
+        }
+    }
+}
 
 int main(int argc, char** argv){
 	if(strcmp(argv[1],"plane")==0){
@@ -219,6 +264,9 @@ int main(int argc, char** argv){
     }
 	else if(strcmp(argv[1],"cone") == 0){
         cone(atof(argv[2]),atof(argv[3]), atof(argv[4]), atof(argv[5]), argv[6]);
+    }
+	else if(strcmp(argv[1],"torus") == 0){
+        torus(atof(argv[2]),atof(argv[3]), atof(argv[4]), atof(argv[5]), argv[6]);
     }
 	return 0;
 }

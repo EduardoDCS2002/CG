@@ -76,6 +76,9 @@ void readXMLgroups(XMLElement* group, Group* pai){
 					if (strcmp(model->Attribute("file"), "box.3d") == 0) {
 						readFile("box.3d", grupo);
 					}
+					if (strcmp(model->Attribute("file"), "torus.3d") == 0) {
+						readFile("torus.3d", grupo);
+					}
 					model = model->NextSiblingElement();
 				}
 
