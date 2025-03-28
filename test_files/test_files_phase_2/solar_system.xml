@@ -1,0 +1,138 @@
+<world>
+    <window width="1024" height="768" />
+    <camera>
+        <position x="0" y="50" z="150" />
+        <lookAt x="0" y="0" z="0" />
+        <up x="0" y="1" z="0" />
+        <projection fov="60" near="1" far="10000" />
+    </camera>
+
+    <!-- Sun (center of the solar system) -->
+    <group>
+        <transform>
+            <scale x="5" y="5" z="5" />
+        </transform>
+        <models>
+            <model file="sphere.3d" />
+        </models>
+        
+        <!-- Mercury Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" /> <!-- Rotation will be animated -->
+                <translate x="10" y="0" z="0" />
+                <scale x="0.4" y="0.4" z="0.4" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+        </group>
+        
+        <!-- Venus Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" />
+                <translate x="15" y="0" z="0" />
+                <scale x="0.6" y="0.6" z="0.6" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+        </group>
+        
+        <!-- Earth Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" />
+                <translate x="20" y="0" z="0" />
+                <scale x="0.6" y="0.6" z="0.6" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+            
+            <!-- Moon Orbit -->
+            <group>
+                <transform>
+                    <rotate angle="0" x="0" y="1" z="0" />
+                    <translate x="3" y="0" z="0" />
+                    <scale x="0.2" y="0.2" z="0.2" />
+                </transform>
+                <models>
+                    <model file="sphere.3d" />
+                </models>
+            </group>
+        </group>
+        
+        <!-- Mars Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" />
+                <translate x="25" y="0" z="0" />
+                <scale x="0.5" y="0.5" z="0.5" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+        </group>
+        
+        <!-- Jupiter Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" />
+                <translate x="35" y="0" z="0" />
+                <scale x="1.2" y="1.2" z="1.2" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+        </group>
+        
+        <!-- Saturn Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" />
+                <translate x="45" y="0" z="0" />
+                <scale x="1.0" y="1.0" z="1.0" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+            
+            <!-- Saturn's Rings -->
+            <group>
+                <transform>
+                    <rotate angle="30" x="1" y="0" z="0" />
+                    <scale x="0.2" y="0.1" z="0.2" />
+                </transform>
+                <models>
+                    <model file="torus.3d" /> <!-- Assuming you have a torus model -->
+                </models>
+            </group>
+        </group>
+        
+        <!-- Uranus Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" />
+                <translate x="55" y="0" z="0" />
+                <scale x="0.8" y="0.8" z="0.8" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+        </group>
+        
+        <!-- Neptune Orbit -->
+        <group>
+            <transform>
+                <rotate angle="0" x="0" y="1" z="0" />
+                <translate x="65" y="0" z="0" />
+                <scale x="0.8" y="0.8" z="0.8" />
+            </transform>
+            <models>
+                <model file="sphere.3d" />
+            </models>
+        </group>
+    </group>
+</world>
