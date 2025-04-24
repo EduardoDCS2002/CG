@@ -79,6 +79,9 @@ void readXMLgroups(XMLElement* group, Group* pai){
 					if (strcmp(model->Attribute("file"), "torus.3d") == 0) {
 						readFile("torus.3d", grupo);
 					}
+					if (strcmp(model->Attribute("file"), "bezier.3d") == 0) {
+						readFile("bezier.3d", grupo);
+					}
 					model = model->NextSiblingElement();
 				}
 
@@ -102,12 +105,42 @@ void readXMLgroups(XMLElement* group, Group* pai){
 
 				XMLElement* translate = transform->FirstChildElement("translate");
 				if(translate){
-					float t[3] ={
-						translate->FloatAttribute("x"),
-						translate->FloatAttribute("y"),
-						translate->FloatAttribute("z")
-					};
-					grupo->setTranslation(t);
+					float time = translate->FloatAttribute("time");
+					if(time){
+						grupo->setTranslationTime(time);
+						float align = translate->FloatAttribute("align");
+						if(align){
+							grupo->setAlign(align);
+						}
+						
+						XMLElement* point = translate->FirstChildElement("point");
+						if(point){
+							float x = point->FloatAttribute("x");
+							float y = point->FloatAttribute("y");
+							float z = point->FloatAttribute("z");
+							
+							Ponto ponto = *new Ponto(x,y,z);
+							grupo->addPontoTranslacao(ponto);
+
+							while(point->NextSiblingElement() != nullptr){
+								point = point->NextSiblingElement();
+
+								float x = point->FloatAttribute("x");
+								float y = point->FloatAttribute("y");
+								float z = point->FloatAttribute("z");
+								
+								Ponto ponto = *new Ponto(x,y,z);
+								grupo->addPontoTranslacao(ponto);
+							}
+						}
+					}
+					else{
+						float t[3] ={
+							translate->FloatAttribute("x"),
+							translate->FloatAttribute("y"),
+							translate->FloatAttribute("z")
+						};
+						grupo->setTranslation(t);
 				}
 				
 				XMLElement* scale = transform->FirstChildElement("scale");
@@ -135,6 +168,7 @@ void readXMLgroups(XMLElement* group, Group* pai){
 			}
 		}
 	}
+}
 }
 
 void readXML(string file) {
@@ -215,9 +249,24 @@ void draw(list<Group*> mainGrupos){
 		for(auto ponto : pontosatual ){
 			cout<<"x: " << ponto.getX() << " y: " <<ponto.getY()<<" z: "<<ponto.getZ()<<endl;
 		}*/
-		float t[3], r[4], s[3];
-		grupo->getTranslation(t);
-		grupo->getRotation(r);
+		float t[3], r[4], s[3], rotationTime[4];
+
+		//TranslationTime
+		float translationTime = grupo->getTranslationTime();
+
+		if(translationTime != -1){
+			list<Ponto> translationPoints = grupo->getPontosTranslacao();
+			bool align = grupo->getAlign();
+		}
+		else{
+			grupo->getTranslation(t);
+		}
+
+		//ROTATION
+		grupo->getRotationTime(rotationTime);
+		grupo->getRotation(r);	
+		
+		//SCALE
 		grupo->getScale(s);
 
 		glRotatef(r[0],r[1],r[2],r[3]);

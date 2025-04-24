@@ -12,6 +12,8 @@
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
+//#include "../toolkits/glut/GL/glut.h"
+
 #endif
 
 #define _USE_MATH_DEFINES
@@ -69,19 +71,25 @@ class Group{
 		list<Ponto> pontos;
 		int nr;
 		float rotation[4];
+		float rotationTime[4];
 		float scale[3];
 		float translation[3];
-	
+		float translationTime;
+		bool align;
+		std::list<Ponto> pontosTranslacao;
+
 		Group(int nr){
 			this->nr = nr;
 			for(int i = 0;i<4;i++){
 				this->rotation[i] = 0.0f;
+				this->rotationTime[i] = 0.0f;
 			}
 			for(int i = 0;i<3;i++){
 				this->scale[i] = 1.0f;
 				this->translation[i] = 0.0f;
 			}
-			
+			this->translationTime = -1;
+			this->align = 0;
 		}
 
 		//GETS
@@ -103,12 +111,29 @@ class Group{
 			for(int i = 0; i < 3; i++)
 				outTranslation[i] = translation[i];
 		}
+
+		float getTranslationTime(){
+			return translationTime;
+		}
+
+		void getRotationTime(float outRotationTime[4]){
+			for (int i = 0; i < 4; i++){
+				outRotationTime[i] = rotationTime[i];
+			}
+		}
+
+		bool getAlign(){
+			return align;
+		}
 		
 		list<Group*> getSubgroups(){       
 			return subgroups;
 		}
 		list<Ponto> getPontos(){
 			return this->pontos;
+		}
+		list<Ponto> getPontosTranslacao(){
+			return this->pontosTranslacao;
 		}
 
 		//SETS
@@ -126,6 +151,12 @@ class Group{
 			}
 		}
 
+		void setRotationTime(float newRotationTime[4]){
+			for (int i = 0; i < 4; i++){
+				rotationTime[i] = newRotationTime[i];
+			}
+		}
+
 		void setScale(float newScale[3]){
 			for (int i = 0; i < 3; i++){
 				scale[i] = newScale[i];
@@ -136,7 +167,14 @@ class Group{
 			for (int i = 0; i < 3; i++){
 				translation[i] = newTranslation[i];
 			}
-			
+		}
+
+		void setTranslationTime(float newTranslationTime){
+			translationTime = newTranslationTime;
+		}
+
+		void setAlign(float newAlign){
+			align = newAlign;
 		}
 
 		// métodos das listas
@@ -145,5 +183,8 @@ class Group{
 		}
 		void addPonto(Ponto ponto) {
 			this->pontos.push_back(ponto);
+		}
+		void addPontoTranslacao(Ponto ponto){
+			this->pontosTranslacao.push_back(ponto);
 		}
 };

@@ -252,6 +252,118 @@ void torus(float inner_radius, float outer_radius, int slices, int rings, char *
     }
 }
 
+float bernstein(int i, float t) {
+    switch(i) {
+        case 0: return (1 - t) * (1 - t) * (1 - t);
+        case 1: return 3 * t * (1 - t) * (1 - t);
+        case 2: return 3 * t * t * (1 - t);
+        case 3: return t * t * t;
+    }
+    return 0;
+}
+
+Ponto bezierPatchEval(const std::vector<Ponto>& cp, float u, float v) {
+    Ponto p;
+    for (int i = 0; i < 4; ++i) {
+        float bu = bernstein(i, u);
+        for (int j = 0; j < 4; ++j) {
+            float bv = bernstein(j, v);
+            Ponto temp = cp[i * 4 + j];
+            float x = p.getX() + bu * bv * temp.getX();
+            float y = p.getY() + bu * bv * temp.getY();
+            float z = p.getZ() + bu * bv * temp.getZ();
+            p.setX(x);
+            p.setY(y);
+            p.setZ(z);
+        }
+    }
+    return p;
+}
+
+void bezier(char* file_in, int tessellation, char* file_out) {
+    std::ifstream infile(file_in);
+    std::ofstream outfile(file_out);
+    std::vector<std::vector<int>> patches;
+    std::vector<Ponto> controlPoints;
+
+    int patchCount;
+    infile >> patchCount;
+
+    for (int i = 0; i < patchCount; ++i) {
+		std::string line;
+		std::getline(infile >> std::ws, line); // lê linha, ignorando espaços em branco
+		for (char& c : line) {
+			if (c == ',') c = ' ';
+		}
+		std::stringstream ss(line);
+		std::vector<int> patch(16);
+		for (int j = 0; j < 16; ++j) {
+			ss >> patch[j];
+		}
+		patches.push_back(patch);
+	}
+	
+
+    std::string line;
+	while (std::getline(infile, line)) {
+		for (char& c : line) {
+			if (c == ',') c = ' ';
+		}
+		std::stringstream ss(line);
+		float x, y, z;
+		if (ss >> x >> y >> z) {
+			controlPoints.emplace_back(x, y, z);
+		}
+	}
+
+    std::vector<Ponto> vertices;
+
+    for (const auto& patch : patches) {
+        std::vector<Ponto> patchPoints;
+        for (int idx : patch) {
+			if (idx < 0 || idx >= (int)controlPoints.size()) {
+				std::cerr << " Erro: índice fora do intervalo: " << idx
+						  << " (tamanho dos pontos: " << controlPoints.size() << ")\n";
+				exit(EXIT_FAILURE);
+			}
+			patchPoints.push_back(controlPoints[idx]);
+		}
+		
+
+        for (int i = 0; i < tessellation; ++i) {
+            float u = (float)i / tessellation;
+            float u_next = (float)(i + 1) / tessellation;
+            for (int j = 0; j < tessellation; ++j) {
+                float v = (float)j / tessellation;
+                float v_next = (float)(j + 1) / tessellation;
+
+                Ponto p1 = bezierPatchEval(patchPoints, u, v);
+                Ponto p2 = bezierPatchEval(patchPoints, u_next, v);
+                Ponto p3 = bezierPatchEval(patchPoints, u, v_next);
+                Ponto p4 = bezierPatchEval(patchPoints, u_next, v_next);
+
+                // Triângulo 1
+                vertices.push_back(p1);
+                vertices.push_back(p4);
+                vertices.push_back(p2);
+
+                // Triângulo 2
+                vertices.push_back(p1);
+                vertices.push_back(p3);
+                vertices.push_back(p4);
+            }
+        }
+    }
+
+    outfile << vertices.size() << "\n";
+    for (Ponto p : vertices) {
+        outfile << p.getX() << " " << p.getY() << " " << p.getZ() << "\n";
+    }
+
+    infile.close();
+    outfile.close();
+}
+
 int main(int argc, char** argv){
 	if(strcmp(argv[1],"plane")==0){
 		plane(atof(argv[2]),atof(argv[3]), argv[4]);
@@ -268,5 +380,8 @@ int main(int argc, char** argv){
 	else if(strcmp(argv[1],"torus") == 0){
         torus(atof(argv[2]),atof(argv[3]), atof(argv[4]), atof(argv[5]), argv[6]);
     }
+	else if (strcmp(argv[1],"bezier") == 0){
+		bezier(argv[2], atoi(argv[3]), argv[4]);
+	}
 	return 0;
 }
