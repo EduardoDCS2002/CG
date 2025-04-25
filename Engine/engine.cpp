@@ -93,24 +93,38 @@ void readXMLgroups(XMLElement* group, Group* pai){
 			if(transform){
 				cout<<"Entrou no transform"<<endl;
 				XMLElement* rotate = transform->FirstChildElement("rotate");
-				if(rotate){
-					float r[4] ={
-						rotate->FloatAttribute("angle"),
-						rotate->FloatAttribute("x"),
-						rotate->FloatAttribute("y"),
-						rotate->FloatAttribute("z")
-					};
-					grupo->setRotation(r);
+				if (rotate) {
+					if (rotate->Attribute("time")) {
+						float rt[4] = {
+							rotate->FloatAttribute("time"),
+							rotate->FloatAttribute("x"),
+							rotate->FloatAttribute("y"),
+							rotate->FloatAttribute("z")
+						};
+						grupo->setRotationTime(rt);
+					}
+					else if (rotate->Attribute("angle")) {
+						float r[4] = {
+							rotate->FloatAttribute("angle"),
+							rotate->FloatAttribute("x"),
+							rotate->FloatAttribute("y"),
+							rotate->FloatAttribute("z")
+						};
+						grupo->setRotation(r);
+					}
 				}
+
 
 				XMLElement* translate = transform->FirstChildElement("translate");
 				if(translate){
 					float time = translate->FloatAttribute("time");
 					if(time){
 						grupo->setTranslationTime(time);
-						float align = translate->FloatAttribute("align");
-						if(align){
-							grupo->setAlign(align);
+						const char* alignAttr = translate->Attribute("align");
+						if (alignAttr && strcmp(alignAttr, "true") == 0) {
+							grupo->setAlign(true);
+						} else {
+							grupo->setAlign(false);
 						}
 						
 						XMLElement* point = translate->FirstChildElement("point");
@@ -235,6 +249,111 @@ void readXML(string file) {
 
 }
 
+//
+void cross(float* a, float* b, float* res) {
+
+    res[0] = a[1] * b[2] - a[2] * b[1];
+    res[1] = a[2] * b[0] - a[0] * b[2];
+    res[2] = a[0] * b[1] - a[1] * b[0];
+}
+
+//
+void normalize(float* a) {
+
+    float l = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+    a[0] = a[0] / l;
+    a[1] = a[1] / l;
+    a[2] = a[2] / l;
+}
+
+// Rotation matrix
+void buildRotMatrix(float* x, float* y, float* z, float* m) {
+
+    m[0] = x[0]; m[1] = x[1]; m[2] = x[2]; m[3] = 0;
+    m[4] = y[0]; m[5] = y[1]; m[6] = y[2]; m[7] = 0;
+    m[8] = z[0]; m[9] = z[1]; m[10] = z[2]; m[11] = 0;
+    m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
+}
+
+//
+void getCatmullRomPoint(float t, Ponto p0, Ponto p1, Ponto p2, Ponto p3, float* pos, float* deriv) {
+
+    float M[4][4] = { {-0.5f,  1.5f, -1.5f,  0.5f},
+                    { 1.0f, -2.5f,  2.0f, -0.5f},
+                    {-0.5f,  0.0f,  0.5f,  0.0f},
+                    { 0.0f,  1.0f,  0.0f,  0.0f} };
+
+    float P[4][3] = { {p0.getX(),p0.getY(), p0.getZ()},
+                    {p1.getX(), p1.getY(), p1.getZ()},
+                    {p2.getX(), p2.getY(), p2.getZ()},
+                    {p3.getX(), p3.getY(), p3.getZ()} };
+
+    // Compute A = M * P
+    float A[4][3] = { 0 };
+
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 3; j++)
+            for (int k = 0; k < 4; k++) A[i][j] += M[i][k] * P[k][j];
+
+    float T[4] = { t * t * t, t * t, t, 1 };
+
+    // pos = T * A
+
+    pos[0] = 0;
+    pos[1] = 0;
+    pos[2] = 0;
+
+    for (int j = 0; j < 3; j++)
+        for (int k = 0; k < 4; k++) pos[j] += T[k] * A[k][j];
+
+    deriv[0] = 0;
+    deriv[1] = 0;
+    deriv[2] = 0;
+
+    float Tderiv[4] = { 3 * t * t, 2 * t, 1, 0 };
+
+    for (int j = 0; j < 3; j++)
+        for (int k = 0; k < 4; k++) deriv[j] += Tderiv[k] * A[k][j];
+
+}
+
+//
+void getGlobalCatmullRomPoint(float gt, float* pos, float* deriv, vector<Ponto> pontos) {
+
+    int tamLoop = pontos.size(); // Points that make up the loop for catmull-rom interpolation
+    float t = gt * tamLoop; // this is the real global t
+    int index = floor(t);  // which segment
+    t = t - index; // where within  the segment
+
+    // indices store the points
+    int indices[4];
+    indices[0] = (index + tamLoop - 1) % tamLoop;
+    indices[1] = (indices[0] + 1) % tamLoop;
+    indices[2] = (indices[1] + 1) % tamLoop;
+    indices[3] = (indices[2] + 1) % tamLoop;
+
+    getCatmullRomPoint(t, pontos[indices[0]], pontos[indices[1]], pontos[indices[2]], pontos[indices[3]], pos, deriv);
+}
+
+void alinhamentoCurva(float* deriv) {
+
+    float Z[3];
+    float Y[3] = { 0,1,0 };
+    float X[3] = { deriv[0],deriv[1],deriv[2] };
+    float m[16];
+
+    cross(X, Y, Z);
+    cross(Z, X, Y);
+
+    normalize(X);
+    normalize(Y);
+    normalize(Z);
+
+    buildRotMatrix(X, Y, Z, m);
+
+    glMultMatrixf((float*)m);
+}
+
 
 void draw(list<Group*> mainGrupos){
 	
@@ -243,34 +362,60 @@ void draw(list<Group*> mainGrupos){
 		
 		glPushMatrix();
 		list<Ponto> pontosatual = grupo->getPontos();
-		/*if(pontosatual.size()>0){
-			cout << "No :C" << endl;
-		}
-		for(auto ponto : pontosatual ){
-			cout<<"x: " << ponto.getX() << " y: " <<ponto.getY()<<" z: "<<ponto.getZ()<<endl;
-		}*/
-		float t[3], r[4], s[3], rotationTime[4];
+		
+		float t[3], r[4], s[3], rt[4];
 
-		//TranslationTime
+		//Translation
 		float translationTime = grupo->getTranslationTime();
 
-		if(translationTime != -1){
+		if (translationTime != -1) {
 			list<Ponto> translationPoints = grupo->getPontosTranslacao();
-			bool align = grupo->getAlign();
-		}
-		else{
+			vector<Ponto> pontosVec(translationPoints.begin(), translationPoints.end());
+
+			float te = glutGet(GLUT_ELAPSED_TIME) % (int)(translationTime * 1000);
+			float gt = te / (translationTime * 1000);
+
+			float pos[3], deriv[3];
+
+			glPushMatrix();
+			glBegin(GL_LINE_LOOP);
+			for (float t = 0; t < 1; t += 0.01) {
+				float posAux[3], derivAux[3];
+				getGlobalCatmullRomPoint(t, posAux, derivAux, pontosVec);
+				glVertex3f(posAux[0], posAux[1], posAux[2]);
+			}
+			glEnd();
+			glPopMatrix();
+			
+			getGlobalCatmullRomPoint(gt, pos, deriv, pontosVec);	//posiciona a teapot ao longo da curva
+
+			glTranslatef(pos[0], pos[1], pos[2]);
+			if (grupo->getAlign()) {
+				alinhamentoCurva(deriv);
+			}
+
+		} else {
 			grupo->getTranslation(t);
+			glTranslatef(t[0], t[1], t[2]);
 		}
 
-		//ROTATION
-		grupo->getRotationTime(rotationTime);
-		grupo->getRotation(r);	
+		//Rotation
+		grupo->getRotationTime(rt);
+		grupo->getRotation(r);
+
+		if (rt[0] != 0) {
+			float elapsed = glutGet(GLUT_ELAPSED_TIME) % (int)(rt[0] * 1000);
+			float angle = (elapsed * 360.0f) / (rt[0] * 1000);  // Ângulo proporcional ao tempo
+			glRotatef(angle, rt[1], rt[2], rt[3]);
+		}
+		else {
+			glRotatef(r[0], r[1], r[2], r[3]);
+		}	
 		
-		//SCALE
+		//Scale
 		grupo->getScale(s);
 
-		glRotatef(r[0],r[1],r[2],r[3]);
-		glTranslatef(t[0],t[1],t[2]);
+
 		glScalef(s[0],s[1],s[2]);
 
 		for(auto it = pontosatual.begin(); it != pontosatual.end();){
