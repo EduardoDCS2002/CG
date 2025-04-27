@@ -28,7 +28,6 @@ float fps;
 void readFile(string caminho3d, Group* group) {
 	string linha;
 	vector<string> coordenadas;
-	cout<< caminho3d<<endl;
 	ifstream file(caminho3d);
 	if (file.is_open()) {
 		getline(file, linha);                   
@@ -67,11 +66,9 @@ void readXMLgroups(XMLElement* group, Group* pai){
 			//MODELS
 			XMLElement* models = childgroup->FirstChildElement("models");
 			if(models){
-				cout<<"Entrou no models"<<endl;
 				XMLElement* model = models->FirstChildElement("model");
 
 				while (model != nullptr) {
-					cout<<"Entrou no model"<<endl;
 					if (strcmp(model->Attribute("file"), "sphere.3d") == 0) {
 						readFile("sphere.3d", grupo);
 					}
@@ -99,7 +96,6 @@ void readXMLgroups(XMLElement* group, Group* pai){
 			
 			XMLElement* transform = childgroup->FirstChildElement("transform");
 			if(transform){
-				cout<<"Entrou no transform"<<endl;
 				XMLElement* rotate = transform->FirstChildElement("rotate");
 				if (rotate) {
 					if (rotate->Attribute("time")) {
@@ -176,17 +172,13 @@ void readXMLgroups(XMLElement* group, Group* pai){
 				}
 			}
 			if(pai != nullptr){
-				cout<<"Tem pai"<<endl;
 				pai->addSubgroup(grupo);
-				cout << "Subgroups size: " << pai->getSubgroups().size() <<endl;
 			}
 			else{
 				mainGrupos.emplace_back(grupo);
 			}
 			if(childgroup->FirstChildElement("group")){
-				cout<<"Avança para o proximo group"<<endl;
 				readXMLgroups(childgroup->FirstChildElement("group"), grupo);
-				cout << "Primeira vez:" << &grupo << endl;
 			}
 		}
 	}
@@ -366,7 +358,6 @@ void alinhamentoCurva(float* deriv) {
 void draw(list<Group*> mainGrupos){
 	
 	for(auto grupo : mainGrupos){
-		//cout<<"olha o draw "<< grupo.getnr() <<endl;
 		glPushMatrix();
 
 		//list<Ponto> pontosatual = grupo->getPontos();
