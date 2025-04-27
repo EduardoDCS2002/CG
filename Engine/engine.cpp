@@ -20,6 +20,11 @@ int timebase = 0;
 float frame = 0;
 float fps;
 
+//VBO stuff
+GLuint vertices, verticeCount;
+GLuint indices;
+unsigned int indexCount;
+
 void readFile(string caminho3d, Group* group) {
 	string linha;
 	vector<string> coordenadas;
