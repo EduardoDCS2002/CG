@@ -1,5 +1,6 @@
 <world>
     <window width="1024" height="768" />
+    
     <camera>
         <position x="0" y="50" z="150" />
         <lookAt x="0" y="0" z="0" />
@@ -7,20 +8,19 @@
         <projection fov="60" near="1" far="10000" />
     </camera>
 
-    <!-- Sun -->
     <group>
+        <!-- Sun -->
         <transform>
             <scale x="5" y="5" z="5" />
         </transform>
         <models>
             <model file="sphere.3d" />
         </models>
-        
-        <!-- Mercury Orbit -->
 
+        <!-- Mercury -->
         <group>
             <transform>
-                <rotate angle="110" x="0" y="1" z="0" />
+                <rotate time="2.4" x="0" y="1" z="0" />
                 <translate x="10" y="0" z="0" />
                 <scale x="0.4" y="0.4" z="0.4" />
             </transform>
@@ -28,11 +28,11 @@
                 <model file="sphere.3d" />
             </models>
         </group>
-        
-        <!-- Venus Orbit -->
+
+        <!-- Venus -->
         <group>
             <transform>
-                <rotate angle="70" x="0" y="1" z="0" />
+                <rotate time="6.2" x="0" y="1" z="0" />
                 <translate x="15" y="0" z="0" />
                 <scale x="0.6" y="0.6" z="0.6" />
             </transform>
@@ -40,35 +40,35 @@
                 <model file="sphere.3d" />
             </models>
         </group>
-        
-        <!-- Earth Orbit -->
+
+        <!-- Earth -->
         <group>
             <transform>
-                <rotate angle="80" x="0" y="1" z="0" />
+                <rotate time="10" x="0" y="1" z="0" />
                 <translate x="20" y="0" z="0" />
                 <scale x="0.6" y="0.6" z="0.6" />
             </transform>
             <models>
                 <model file="sphere.3d" />
             </models>
-            
-            <!-- Moon Orbit -->
+
+            <!-- Moon -->
             <group>
                 <transform>
-                    <rotate angle="120" x="0" y="1" z="0" />
+                    <rotate time="2" x="0" y="1" z="0" />
                     <translate x="3" y="0" z="0" />
-                    <scale x="2" y="1" z="2" />
+                    <scale x="0.2" y="0.2" z="0.2" />
                 </transform>
                 <models>
                     <model file="sphere.3d" />
                 </models>
             </group>
         </group>
-        
-        <!-- Mars Orbit -->
+
+        <!-- Mars -->
         <group>
             <transform>
-                <rotate angle="120" x="0" y="1" z="0" />
+                <rotate time="18.8" x="0" y="1" z="0" />
                 <translate x="25" y="0" z="0" />
                 <scale x="0.5" y="0.5" z="0.5" />
             </transform>
@@ -76,11 +76,11 @@
                 <model file="sphere.3d" />
             </models>
         </group>
-        
+
         <!-- Jupiter -->
         <group>
             <transform>
-                <rotate angle="30" x="0" y="1" z="0" />
+                <rotate time="129" x="0" y="1" z="0" />
                 <translate x="35" y="0" z="0" />
                 <scale x="1.2" y="1.2" z="1.2" />
             </transform>
@@ -88,36 +88,35 @@
                 <model file="sphere.3d" />
             </models>
         </group>
-        
+
         <!-- Saturn -->
         <group>
             <transform>
-                <rotate angle="160" x="0" y="1" z="0" />
+                <rotate time="295" x="0" y="1" z="0" />
                 <translate x="45" y="0" z="0" />
                 <scale x="1.0" y="1.0" z="1.0" />
             </transform>
             <models>
                 <model file="sphere.3d" />
             </models>
-            
-            <!-- Saturn's Rings -->
+
+            <!-- Saturn Rings -->
             <group>
                 <transform>
-                    <rotate angle="30" x="1" y="0" z="0" />
                     <translate x="0" y="0" z="0" />
-                    <scale x="0.2" y="0" z="0.2" />
+                    <rotate angle="30" x="1" y="0" z="0" />
+                    <scale x="1.5" y="0.1" z="1.5" />
                 </transform>
                 <models>
                     <model file="torus.3d" />
                 </models>
             </group>
         </group>
-        
+
         <!-- Uranus -->
-        
         <group>
             <transform>
-                <rotate angle="220" x="0" y="1" z="0" />
+                <rotate time="841" x="0" y="1" z="0" />
                 <translate x="55" y="0" z="0" />
                 <scale x="0.8" y="0.8" z="0.8" />
             </transform>
@@ -125,11 +124,11 @@
                 <model file="sphere.3d" />
             </models>
         </group>
-        
+
         <!-- Neptune -->
         <group>
             <transform>
-                <rotate angle="300" x="0" y="1" z="0" />
+                <rotate time="1650" x="0" y="1" z="0" />
                 <translate x="65" y="0" z="0" />
                 <scale x="0.8" y="0.8" z="0.8" />
             </transform>
@@ -137,5 +136,27 @@
                 <model file="sphere.3d" />
             </models>
         </group>
+
+        <!-- Comet -->
+        <group>
+            <transform>
+                <translate time="30" align="true">
+                    <point x="0" y="0" z="150" />
+                    <point x="50" y="30" z="100" />
+                    <point x="80" y="60" z="50" />
+                    <point x="60" y="80" z="10" />
+                    <point x="20" y="90" z="-20" />
+                    <point x="-20" y="80" z="-40" />
+                    <point x="-50" y="60" z="-70" />
+                    <point x="-30" y="30" z="-100" />
+                    <point x="0" y="0" z="-150" />
+                </translate>
+				<scale x="0.5" y="0.5" z="0.5" />
+            </transform>
+0.0.            <models>
+                <model file="bezier.3d" />
+            </models>
+bezier        </group>
+
     </group>
 </world>
