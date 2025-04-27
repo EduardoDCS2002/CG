@@ -11,8 +11,10 @@
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
-#include <GL/glut.h>
-//#include "../toolkits/glut/GL/glut.h"
+//#include <GL/glew.h>
+//#include <GL/glut.h>
+#include "../toolkits/glut/GL/glut.h"
+#include "../toolkits/glew/GL/glew.h"
 
 #endif
 
@@ -68,7 +70,7 @@ class Group{
 	public:
 		
 		list<Group*> subgroups;
-		list<Ponto> pontos;
+		//list<Ponto> pontos;
 		int nr;
 		float rotation[4];
 		float rotationTime[4];
@@ -77,6 +79,8 @@ class Group{
 		float translationTime;
 		bool align;
 		std::list<Ponto> pontosTranslacao;
+		GLuint vertices;
+		int verticeCount;
 
 		Group(int nr){
 			this->nr = nr;
@@ -90,6 +94,8 @@ class Group{
 			}
 			this->translationTime = -1;
 			this->align = 0;
+			this->vertices = 0;
+			this->verticeCount = 0;
 		}
 
 		//GETS
@@ -125,21 +131,31 @@ class Group{
 		bool getAlign(){
 			return align;
 		}
+
+		GLuint getVertices(){
+			return vertices;
+		}
+
+		int getVerticeCount(){
+			return verticeCount;
+		}
 		
 		list<Group*> getSubgroups(){       
 			return subgroups;
 		}
-		list<Ponto> getPontos(){
-			return this->pontos;
-		}
 		list<Ponto> getPontosTranslacao(){
 			return this->pontosTranslacao;
+		}
+		/*
+		list<Ponto> getPontos(){
+			return this->pontos;
 		}
 
 		//SETS
 		void setPontos(list<Ponto> npontos){
 			this->pontos = npontos;
 		}
+		*/
 
 		void setnr(int newnr){
 			nr = newnr;
@@ -177,13 +193,23 @@ class Group{
 			align = newAlign;
 		}
 
+		void setVertices(GLuint newVertices){
+			vertices = newVertices;
+		}
+
+		void setVerticeCount(int newVerticeCount){
+			verticeCount = newVerticeCount;
+		}
+
 		// métodos das listas
 		void addSubgroup(Group* subgroup) {
 			this->subgroups.push_back(subgroup);
 		}
+		/*
 		void addPonto(Ponto ponto) {
 			this->pontos.push_back(ponto);
 		}
+		*/
 		void addPontoTranslacao(Ponto ponto){
 			this->pontosTranslacao.push_back(ponto);
 		}

@@ -21,9 +21,9 @@ float frame = 0;
 float fps;
 
 //VBO stuff
-GLuint vertices, verticeCount;
-GLuint indices;
-unsigned int indexCount;
+//GLuint vertices, verticeCount;
+//GLuint indices;
+//unsigned int indexCount;
 
 void readFile(string caminho3d, Group* group) {
 	string linha;
@@ -33,26 +33,29 @@ void readFile(string caminho3d, Group* group) {
 	if (file.is_open()) {
 		getline(file, linha);                   
 		int nLinhas = atoi(linha.c_str());
-		list<Ponto> pontos;
+		//list<Ponto> pontos;
+		vector<float> vertexData;
 		for (int i = 1; i <= nLinhas; i++) {
 			getline(file, linha);
 			stringstream ss(linha);		
 			vector<string> result{
 				istream_iterator<string>(ss), {}
 			};
+			
+			//pontos.push_back(Ponto(stof(result[0]), stof(result[1]), stof(result[2])));
+			vertexData.push_back(stof(result[0]));
+			vertexData.push_back(stof(result[1]));
+			vertexData.push_back(stof(result[2]));
+		}	
+		//group->setPontos(pontos);
+		GLuint index;
+		glGenBuffers(1, &index);
+		glBindBuffer(GL_ARRAY_BUFFER, index);
+		glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 
-			pontos.push_back(Ponto(stof(result[0]), stof(result[1]), stof(result[2])));
-			
-			
-			
-		}
-		/*for(auto ponto : pontos ){
-			cout<<"x: " << ponto.getX() << " y: " <<ponto.getY()<<" z: "<<ponto.getZ()<<endl;
-		}*/
-		group->setPontos(pontos);
-		/*for(auto ponto : group->getPontos()){
-			cout<<"x: " << ponto.getX() << " y: " <<ponto.getY()<<" z: "<<ponto.getZ()<<endl;
-		}*/
+		group->setVertices(index);
+		group->setVerticeCount(nLinhas);
+		
 	}
 	else { cout << "Erro ao ler o ficheiro .3d" << endl;}
 }
@@ -364,15 +367,34 @@ void draw(list<Group*> mainGrupos){
 	
 	for(auto grupo : mainGrupos){
 		//cout<<"olha o draw "<< grupo.getnr() <<endl;
-		
 		glPushMatrix();
-		list<Ponto> pontosatual = grupo->getPontos();
+
+		//list<Ponto> pontosatual = grupo->getPontos();
+		
+		GLuint vertices = grupo->getVertices();
+		int verticeCount = grupo->getVerticeCount();
 		
 		float t[3], r[4], s[3], rt[4];
 
+		//Rotation
+		grupo->getRotationTime(rt);
+		grupo->getRotation(r);
+
+		
+		if (rt[0] != 0) {
+			float elapsed = glutGet(GLUT_ELAPSED_TIME) % (int)(rt[0] * 1000);
+			float angle = (elapsed * 360.0f) / (rt[0] * 1000);  // Ângulo proporcional ao tempo
+			glRotatef(angle, rt[1], rt[2], rt[3]);
+			int x = glutGet(GLUT_ELAPSED_TIME);
+		}
+		else{
+			glRotatef(r[0], r[1], r[2], r[3]);
+		}
+		
+
 		//Translation
 		float translationTime = grupo->getTranslationTime();
-
+		
 		if (translationTime != -1) {
 			list<Ponto> translationPoints = grupo->getPontosTranslacao();
 			vector<Ponto> pontosVec(translationPoints.begin(), translationPoints.end());
@@ -382,7 +404,7 @@ void draw(list<Group*> mainGrupos){
 
 			float pos[3], deriv[3];
 
-			glPushMatrix();
+			
 			glBegin(GL_LINE_LOOP);
 			for (float t = 0; t < 1; t += 0.01) {
 				float posAux[3], derivAux[3];
@@ -390,7 +412,6 @@ void draw(list<Group*> mainGrupos){
 				glVertex3f(posAux[0], posAux[1], posAux[2]);
 			}
 			glEnd();
-			glPopMatrix();
 			
 			getGlobalCatmullRomPoint(gt, pos, deriv, pontosVec);	//posiciona a teapot ao longo da curva
 
@@ -402,27 +423,17 @@ void draw(list<Group*> mainGrupos){
 		} else {
 			grupo->getTranslation(t);
 			glTranslatef(t[0], t[1], t[2]);
+
 		}
 
-		//Rotation
-		grupo->getRotationTime(rt);
-		grupo->getRotation(r);
-
-		if (rt[0] != 0) {
-			float elapsed = glutGet(GLUT_ELAPSED_TIME) % (int)(rt[0] * 1000);
-			float angle = (elapsed * 360.0f) / (rt[0] * 1000);  // Ângulo proporcional ao tempo
-			glRotatef(angle, rt[1], rt[2], rt[3]);
-		}
-		else {
-			glRotatef(r[0], r[1], r[2], r[3]);
-		}	
+			
 		
 		//Scale
 		grupo->getScale(s);
 
 
 		glScalef(s[0],s[1],s[2]);
-
+		/*
 		for(auto it = pontosatual.begin(); it != pontosatual.end();){
 			glBegin(GL_TRIANGLES);
 			glVertex3f(it->getX(), it->getY(), it->getZ());
@@ -433,6 +444,12 @@ void draw(list<Group*> mainGrupos){
 			++it;
 			glEnd();
 		}
+		*/
+
+		glBindBuffer(GL_ARRAY_BUFFER, vertices);
+		glVertexPointer(3, GL_FLOAT, 0, 0);
+		glDrawArrays(GL_TRIANGLES, 0, verticeCount);
+
 		draw(grupo->getSubgroups());
 		glPopMatrix();
     }
@@ -511,7 +528,6 @@ void renderScene(void) {
 	
 	eixos();
 	
-
 	// End of frame
 	glutSwapBuffers();
 }
@@ -614,37 +630,34 @@ void processMouseMotion(int x, int y){
 
 
 int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowPosition(100, 100);
+    glutInitWindowSize(1200, 800);
+    glutCreateWindow("CG@DI-UM");
+
+	glewInit();
+	
     if (argc == 2) {
 		readXML(argv[1]);
-	}
-	else {
+    }
+    else {
 		readXML("test_1_5.xml");
-	}
-
-	glutInit(&argc, argv);
+    }
 	
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(1200, 800);
-	glutCreateWindow("CG@DI-UM");
+    glutDisplayFunc(renderScene);
+    glutReshapeFunc(changeSize);
+    glutIdleFunc(renderScene);
 
-	// Required callback registry 
-	glutDisplayFunc(renderScene);
-	glutReshapeFunc(changeSize);
-	glutIdleFunc(renderScene);
-	
+    glutMouseFunc(processMouseButtons);
+    glutMotionFunc(processMouseMotion);
+    glutKeyboardFunc(processKeys);
 
-	// Callback registration for keyboard processing
-	glutMouseFunc(processMouseButtons);
-	glutMotionFunc(processMouseMotion);
-	glutKeyboardFunc(processKeys);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
-	//  OpenGL settings
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);		//see through if disable
-	
-	// enter GLUT's main cycle
-	glutMainLoop();
+    glutMainLoop();
 
-	return 1;
+    return 1;
 }
