@@ -1,6 +1,8 @@
 #include "engine.hpp"
-
+#include <map>
 list<Group*> mainGrupos;
+vector<Light> lightsVector;
+map<string, GLuint> texturesMap;
 int nrgroupcounter = 0;
 float camX, camY, camZ;  //posicao x,y,z da camara
 int alpha = 0, beta1 = 0, r = 20;      // angulos e raio da camara
@@ -14,7 +16,7 @@ double upZ;
 int fov;
 int near;
 double far;
-int typeDraw = GL_LINE;
+int typeDraw = GL_FILL;
 
 int timebase = 0;
 float frame = 0;
@@ -25,15 +27,16 @@ float fps;
 //GLuint indices;
 //unsigned int indexCount;
 
-void readFile(string caminho3d, Group* group) {
+void readFile(string caminho3d, Models& model) {
 	string linha;
-	vector<string> coordenadas;
 	ifstream file(caminho3d);
 	if (file.is_open()) {
 		getline(file, linha);                   
 		int nLinhas = atoi(linha.c_str());
 		//list<Ponto> pontos;
-		vector<float> vertexData;
+		vector<float> vertexData, normalData, textureData;
+
+		//VERTEX
 		for (int i = 1; i <= nLinhas; i++) {
 			getline(file, linha);
 			stringstream ss(linha);		
@@ -41,161 +44,248 @@ void readFile(string caminho3d, Group* group) {
 				istream_iterator<string>(ss), {}
 			};
 			
-			//pontos.push_back(Ponto(stof(result[0]), stof(result[1]), stof(result[2])));
 			vertexData.push_back(stof(result[0]));
 			vertexData.push_back(stof(result[1]));
 			vertexData.push_back(stof(result[2]));
-		}	
+		}
+		
+		//NORMALS
+		for (int i = 1; i <= nLinhas; i++) {
+			getline(file, linha);
+			stringstream ss(linha);		
+			vector<string> result{
+				istream_iterator<string>(ss), {}
+			};
+			
+			normalData.push_back(stof(result[0]));
+			normalData.push_back(stof(result[1]));
+			normalData.push_back(stof(result[2]));
+		}
+
+		//TEXTURE
+		for (int i = 1; i <= nLinhas; i++) {
+			getline(file, linha);
+			stringstream ss(linha);		
+			vector<string> result{
+				istream_iterator<string>(ss), {}
+			};
+			
+			textureData.push_back(stof(result[0]));
+			textureData.push_back(stof(result[1]));
+		}
+
 		//group->setPontos(pontos);
-		GLuint index;
-		glGenBuffers(1, &index);
-		glBindBuffer(GL_ARRAY_BUFFER, index);
+		GLuint vboVertex;
+		glGenBuffers(1, &vboVertex);
+		glBindBuffer(GL_ARRAY_BUFFER, vboVertex);
 		glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 
-		group->setVertices(index);
-		group->setVerticeCount(nLinhas);
-		
+		GLuint vboNormals;
+		glGenBuffers(1, &vboNormals);
+		glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+		glBufferData(GL_ARRAY_BUFFER, normalData.size() * sizeof(float), normalData.data(), GL_STATIC_DRAW);
+
+		GLuint vboTexture;
+		glGenBuffers(1, &vboTexture);
+		glBindBuffer(GL_ARRAY_BUFFER, vboTexture);
+		glBufferData(GL_ARRAY_BUFFER, textureData.size() * sizeof(float), textureData.data(), GL_STATIC_DRAW);
+
+		model.setVertices(vboVertex);
+		model.setNormals(vboNormals);
+		model.setTexCoords(vboTexture);
+		model.setVertexCount(nLinhas);
 	}
 	else { cout << "Erro ao ler o ficheiro .3d" << endl;}
 }
 
-void readXMLgroups(XMLElement* group, Group* pai){
-	for(XMLElement* childgroup = group;childgroup != nullptr; childgroup = childgroup->NextSiblingElement("group")){
-		if(childgroup){
-			Group* grupo = new Group(nrgroupcounter++);
-			//MODELS
-			XMLElement* models = childgroup->FirstChildElement("models");
-			if(models){
-				XMLElement* model = models->FirstChildElement("model");
+void readXMLgroups(XMLElement* group, Group* pai) {
+    for (XMLElement* childgroup = group; childgroup != nullptr; childgroup = childgroup->NextSiblingElement("group")) {
+        if (childgroup) {
+            Group* grupo = new Group(nrgroupcounter++);
 
-				while (model != nullptr) {
-					if (strcmp(model->Attribute("file"), "sphere.3d") == 0) {
-						readFile("sphere.3d", grupo);
-					}
-					if (strcmp(model->Attribute("file"), "cone.3d") == 0) {
-						readFile("cone.3d", grupo);
-					}
-					if (strcmp(model->Attribute("file"), "plane.3d") == 0) {
-						readFile("plane.3d", grupo);
-					}
-					if (strcmp(model->Attribute("file"), "box.3d") == 0) {
-						readFile("box.3d", grupo);
-					}
-					if (strcmp(model->Attribute("file"), "torus.3d") == 0) {
-						readFile("torus.3d", grupo);
-					}
-					if (strcmp(model->Attribute("file"), "bezier.3d") == 0) {
-						readFile("bezier.3d", grupo);
-					}
-					model = model->NextSiblingElement();
-				}
+            //MODELS
+            XMLElement* models = childgroup->FirstChildElement("models");
+            if (models) {
 
-			}
-			//TRANSFORM
-			
-			
-			XMLElement* transform = childgroup->FirstChildElement("transform");
-			if(transform){
-				XMLElement* rotate = transform->FirstChildElement("rotate");
-				if (rotate) {
-					if (rotate->Attribute("time")) {
-						float rt[4] = {
-							rotate->FloatAttribute("time"),
-							rotate->FloatAttribute("x"),
-							rotate->FloatAttribute("y"),
-							rotate->FloatAttribute("z")
-						};
-						grupo->setRotationTime(rt);
-					}
-					else if (rotate->Attribute("angle")) {
-						float r[4] = {
-							rotate->FloatAttribute("angle"),
-							rotate->FloatAttribute("x"),
-							rotate->FloatAttribute("y"),
-							rotate->FloatAttribute("z")
-						};
-						grupo->setRotation(r);
-					}
-				}
+				//MODEL
+                for (XMLElement* modelElement = models->FirstChildElement("model"); modelElement != nullptr; modelElement = modelElement->NextSiblingElement("model")) {
+                    const char* fileAttr = modelElement->Attribute("file");
+                    if (fileAttr) {
+                        Models model;
+                        readFile(fileAttr, model);
 
+                        //TEXTURE
+                        XMLElement* texture = modelElement->FirstChildElement("texture");
+                        if (texture && texture->Attribute("file")) {
+                            string path = "test_files/test_files_phase_4/";
+                            path += texture->Attribute("file");
+                            model.setTexture(path);
+                        }
 
-				XMLElement* translate = transform->FirstChildElement("translate");
-				if(translate){
-					float time = translate->FloatAttribute("time");
-					if(time){
-						grupo->setTranslationTime(time);
-						const char* alignAttr = translate->Attribute("align");
-						if (alignAttr && strcmp(alignAttr, "true") == 0) {
-							grupo->setAlign(true);
-						} else {
-							grupo->setAlign(false);
-						}
-						
-						XMLElement* point = translate->FirstChildElement("point");
-						if(point){
-							float x = point->FloatAttribute("x");
-							float y = point->FloatAttribute("y");
-							float z = point->FloatAttribute("z");
+                        //COLOR
+                        XMLElement* color = modelElement->FirstChildElement("color");
+                        if (color) {
+                            Color c;
 							
-							Ponto ponto = *new Ponto(x,y,z);
-							grupo->addPontoTranslacao(ponto);
+							//DIFFUSE
+                            XMLElement* diffuse = color->FirstChildElement("diffuse");
+                            if (diffuse) {
+                                float temp[3] = {
+                                    diffuse->FloatAttribute("R") / 255.0f,
+                                    diffuse->FloatAttribute("G") / 255.0f,
+                                    diffuse->FloatAttribute("B") / 255.0f
+                                };
+                                c.setDiffuse(temp);
+                            }
+							
+							//AMBIENT
+                            XMLElement* ambient = color->FirstChildElement("ambient");
+                            if (ambient) {
+                                float temp[3] = {
+                                    ambient->FloatAttribute("R") / 255.0f,
+                                    ambient->FloatAttribute("G") / 255.0f,
+                                    ambient->FloatAttribute("B") / 255.0f
+                                };
+                                c.setAmbient(temp);
+                            }
+							
+							//SPECULAR
+                            XMLElement* specular = color->FirstChildElement("specular");
+                            if (specular) {
+                                float temp[3] = {
+                                    specular->FloatAttribute("R") / 255.0f,
+                                    specular->FloatAttribute("G") / 255.0f,
+                                    specular->FloatAttribute("B") / 255.0f
+                                };
+                                c.setSpecular(temp);
+                            }
+							
+							//EMISSIVE
+                            XMLElement* emissive = color->FirstChildElement("emissive");
+                            if (emissive) {
+                                float temp[3] = {
+                                    emissive->FloatAttribute("R") / 255.0f,
+                                    emissive->FloatAttribute("G") / 255.0f,
+                                    emissive->FloatAttribute("B") / 255.0f
+                                };
+                                c.setEmissive(temp);
+                            }
 
-							while(point->NextSiblingElement() != nullptr){
-								point = point->NextSiblingElement();
+							//SHININESS
+                            XMLElement* shininess = color->FirstChildElement("shininess");
+                            if (shininess) {
+                                c.setShininess(shininess->FloatAttribute("value"));
+                            }
 
-								float x = point->FloatAttribute("x");
-								float y = point->FloatAttribute("y");
-								float z = point->FloatAttribute("z");
-								
-								Ponto ponto = *new Ponto(x,y,z);
-								grupo->addPontoTranslacao(ponto);
-							}
-						}
-					}
-					else{
-						float t[3] ={
-							translate->FloatAttribute("x"),
-							translate->FloatAttribute("y"),
-							translate->FloatAttribute("z")
-						};
-						grupo->setTranslation(t);
-				}
-				
-				XMLElement* scale = transform->FirstChildElement("scale");
-				if(scale){
-					float s[3] ={
-						scale->FloatAttribute("x"),
-						scale->FloatAttribute("y"),
-						scale->FloatAttribute("z")
-					};
-					grupo->setScale(s);
-				}
-			}
-			if(pai != nullptr){
-				pai->addSubgroup(grupo);
-			}
-			else{
-				mainGrupos.emplace_back(grupo);
-			}
-			if(childgroup->FirstChildElement("group")){
-				readXMLgroups(childgroup->FirstChildElement("group"), grupo);
-			}
-		}
-	}
+                            model.setColor(c);
+                        }
+
+                        grupo->modelos.push_back(model);  // adiciona ao grupo
+                    }
+                }
+            }
+
+            //TRANSFORM
+            XMLElement* transform = childgroup->FirstChildElement("transform");
+            if (transform) {
+                XMLElement* child = transform->FirstChildElement();
+                int order[3] = { -1, -1, -1 };
+                int i = 0;
+
+                while (child) {
+                    string name = child->Name();
+
+					//ROTATE
+                    if (name == "rotate") {
+                        order[i] = ROTATE;
+                        if (child->Attribute("time")) {
+                            float rt[4] = {
+                                child->FloatAttribute("time"),
+                                child->FloatAttribute("x"),
+                                child->FloatAttribute("y"),
+                                child->FloatAttribute("z")
+                            };
+                            grupo->setRotationTime(rt);
+                        }
+                        else if (child->Attribute("angle")) {
+                            float r[4] = {
+                                child->FloatAttribute("angle"),
+                                child->FloatAttribute("x"),
+                                child->FloatAttribute("y"),
+                                child->FloatAttribute("z")
+                            };
+                            grupo->setRotation(r);
+                        }
+                    }
+
+					//TRANSLATE
+                    else if (name == "translate") {
+                        order[i] = TRANSLATE;
+                        float time = child->FloatAttribute("time");
+                        if (time) {
+                            grupo->setTranslationTime(time);
+                            const char* alignAttr = child->Attribute("align");
+                            grupo->setAlign(alignAttr && strcmp(alignAttr, "true") == 0);
+
+                            for (XMLElement* point = child->FirstChildElement("point"); point != nullptr; point = point->NextSiblingElement("point")) {
+                                float x = point->FloatAttribute("x");
+                                float y = point->FloatAttribute("y");
+                                float z = point->FloatAttribute("z");
+                                grupo->addPontoTranslacao(Ponto(x, y, z));
+                            }
+                        }
+                        else {
+                            float t[3] = {
+                                child->FloatAttribute("x"),
+                                child->FloatAttribute("y"),
+                                child->FloatAttribute("z")
+                            };
+                            grupo->setTranslation(t);
+                        }
+                    }
+
+					//SCALE
+                    else if (name == "scale") {
+                        order[i] = SCALE;
+                        float s[3] = {
+                            child->FloatAttribute("x"),
+                            child->FloatAttribute("y"),
+                            child->FloatAttribute("z")
+                        };
+                        grupo->setScale(s);
+                    }
+                    i++;
+                    child = child->NextSiblingElement();
+                }
+                grupo->setOrder(order);
+            }
+
+            if (pai != nullptr) {
+                pai->addSubgroup(grupo);
+            }
+            else {
+                mainGrupos.emplace_back(grupo);
+            }
+
+            if (childgroup->FirstChildElement("group")) {
+                readXMLgroups(childgroup->FirstChildElement("group"), grupo);
+            }
+        }
+    }
 }
-}
+
 
 void readXML(string file) {
 	XMLDocument xml;
-	XMLDocument xmltv;
-	string s;
-
 	
 	string path = file;
-	if (!xml.LoadFile(path.c_str())) {
+	XMLError result = xml.LoadFile(path.c_str());
+	if (result != XML_SUCCESS) {
+		cerr << "Erro ao abrir o ficheiro XML: " << path << endl;
+		exit(1);
+	} else {
 		cout << "Ficheiro lido com sucesso" << endl;
 	}
-
 
 	//WORLD
 	XMLElement* world = xml.FirstChildElement("world");
@@ -240,13 +330,67 @@ void readXML(string file) {
 		}
 	}
 
+	//LIGHTS
+	XMLElement* lights = world->FirstChildElement("lights");
+	if(lights){
+		XMLElement* light = lights->FirstChildElement("light");
+
+		//TYPE
+		while(light != nullptr){
+			Light lightTemp;
+			string type = light->Attribute("type");
+			lightTemp.setType(type);
+			//POINT
+			if(type == "point"){
+				float pos[3] = {
+					light->FloatAttribute("posx"),
+					light->FloatAttribute("posy"),
+					light->FloatAttribute("posz")
+				};
+				lightTemp.setPos(pos);
+			}
+			//DIRECTIONAL
+			else if(type == "directional"){
+				float dir[3] = {
+					light->FloatAttribute("dirx"),
+					light->FloatAttribute("diry"),
+					light->FloatAttribute("dirz")
+				};
+				lightTemp.setDir(dir);
+			}
+			//SPOTLIGHT
+			else if(type == "spot"){
+				//pos
+				float pos[3] = {
+					light->FloatAttribute("posx"),
+					light->FloatAttribute("posy"),
+					light->FloatAttribute("posz")
+				};
+				lightTemp.setPos(pos);
+				
+				//dir
+				float dir[3] = {
+					light->FloatAttribute("dirx"),
+					light->FloatAttribute("diry"),
+					light->FloatAttribute("dirz")
+				};
+				lightTemp.setDir(dir);
+
+				//cutoff
+				float cutoff = light->FloatAttribute("cutoff");
+				lightTemp.setCutoff(cutoff);
+			}
+			lightsVector.push_back(lightTemp);
+			light = light->NextSiblingElement();
+		}
+	}
+	
 	//GROUP
 	for(XMLElement* group = world->FirstChildElement("group");group != nullptr; group = group->NextSiblingElement("group")){
 		if(group){
 			readXMLgroups(group, nullptr);
 		}
 	}
-
 }
 
 //
@@ -354,97 +498,170 @@ void alinhamentoCurva(float* deriv) {
     glMultMatrixf((float*)m);
 }
 
+int loadTexture(std::string s) {
+
+    ILuint t;
+    ilGenImages(1, &t);
+    ilBindImage(t);
+	
+	ilEnable(IL_ORIGIN_SET);
+    ilSetInteger(IL_ORIGIN_MODE, IL_ORIGIN_LOWER_LEFT);
+
+    if (!ilLoadImage((ILstring)s.c_str())) {
+        std::string alt = "../" + s;
+        if (!ilLoadImage((ILstring)alt.c_str())) {
+            printf("Erro ao procurar o ficheiro com a encontrada.\n", s.c_str());
+            ilDeleteImages(1, &t);
+            return 0;
+        }
+    }
+
+    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+    unsigned char* texData = ilGetData();
+    int tw = ilGetInteger(IL_IMAGE_WIDTH);
+    int th = ilGetInteger(IL_IMAGE_HEIGHT);
+
+    GLuint texID;
+    glGenTextures(1, &texID);
+    glBindTexture(GL_TEXTURE_2D, texID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    ilDeleteImages(1, &t);
+
+    return texID;
+}
+
 
 void draw(list<Group*> mainGrupos){
-	
-	for(auto grupo : mainGrupos){
-		glPushMatrix();
+    for(auto grupo : mainGrupos){
+        glPushMatrix();
 
-		//list<Ponto> pontosatual = grupo->getPontos();
-		
-		GLuint vertices = grupo->getVertices();
-		int verticeCount = grupo->getVerticeCount();
-		
-		float t[3], r[4], s[3], rt[4];
+        float t[3], r[4], s[3], rt[4];
+        int order[3];
+        grupo->getOrder(order);
 
-		//Rotation
-		grupo->getRotationTime(rt);
-		grupo->getRotation(r);
+        for(int i = 0; i < 3; i++) {
 
-		
-		if (rt[0] != 0) {
-			float elapsed = glutGet(GLUT_ELAPSED_TIME) % (int)(rt[0] * 1000);
-			float angle = (elapsed * 360.0f) / (rt[0] * 1000);  // Ângulo proporcional ao tempo
-			glRotatef(angle, rt[1], rt[2], rt[3]);
-			int x = glutGet(GLUT_ELAPSED_TIME);
-		}
-		else{
-			glRotatef(r[0], r[1], r[2], r[3]);
-		}
-		
+			//ROTATE
+            if(order[i] == ROTATE) {
+                grupo->getRotationTime(rt);
+                grupo->getRotation(r);
 
-		//Translation
-		float translationTime = grupo->getTranslationTime();
-		
-		if (translationTime != -1) {
-			list<Ponto> translationPoints = grupo->getPontosTranslacao();
-			vector<Ponto> pontosVec(translationPoints.begin(), translationPoints.end());
+                if (rt[0] != 0) {
+                    float elapsed = glutGet(GLUT_ELAPSED_TIME) % (int)(rt[0] * 1000);
+                    float angle = (elapsed * 360.0f) / (rt[0] * 1000);
+                    glRotatef(angle, rt[1], rt[2], rt[3]);
+                } else {
+                    glRotatef(r[0], r[1], r[2], r[3]);
+                }
+            }
 
-			float te = glutGet(GLUT_ELAPSED_TIME) % (int)(translationTime * 1000);
-			float gt = te / (translationTime * 1000);
+			//ROTATE
+            if(order[i] == TRANSLATE) {
+                float translationTime = grupo->getTranslationTime();
+                if (translationTime != -1) {
+                    list<Ponto> translationPoints = grupo->getPontosTranslacao();
+                    vector<Ponto> pontosVec(translationPoints.begin(), translationPoints.end());
 
-			float pos[3], deriv[3];
+                    float te = glutGet(GLUT_ELAPSED_TIME) % (int)(translationTime * 1000);
+                    float gt = te / (translationTime * 1000);
 
-			
-			glBegin(GL_LINE_LOOP);
-			for (float t = 0; t < 1; t += 0.01) {
-				float posAux[3], derivAux[3];
-				getGlobalCatmullRomPoint(t, posAux, derivAux, pontosVec);
-				glVertex3f(posAux[0], posAux[1], posAux[2]);
-			}
-			glEnd();
-			
-			getGlobalCatmullRomPoint(gt, pos, deriv, pontosVec);	//posiciona a teapot ao longo da curva
+                    float pos[3], deriv[3];
 
-			glTranslatef(pos[0], pos[1], pos[2]);
-			if (grupo->getAlign()) {
-				alinhamentoCurva(deriv);
-			}
+                    glBegin(GL_LINE_LOOP);
+                    for (float t = 0; t < 1; t += 0.01) {
+                        float posAux[3], derivAux[3];
+                        getGlobalCatmullRomPoint(t, posAux, derivAux, pontosVec);
+                        glVertex3f(posAux[0], posAux[1], posAux[2]);
+                    }
+                    glEnd();
 
-		} else {
-			grupo->getTranslation(t);
-			glTranslatef(t[0], t[1], t[2]);
+                    getGlobalCatmullRomPoint(gt, pos, deriv, pontosVec);
+                    glTranslatef(pos[0], pos[1], pos[2]);
 
-		}
+                    if (grupo->getAlign()) {
+                        alinhamentoCurva(deriv);
+                    }
 
-			
-		
-		//Scale
-		grupo->getScale(s);
+                } else {
+                    grupo->getTranslation(t);
+                    glTranslatef(t[0], t[1], t[2]);
+                }
+            }
 
+			//SCALE
+            if(order[i] == SCALE) {
+                grupo->getScale(s);
+                glScalef(s[0], s[1], s[2]);
+            }
+        }
 
-		glScalef(s[0],s[1],s[2]);
-		/*
-		for(auto it = pontosatual.begin(); it != pontosatual.end();){
-			glBegin(GL_TRIANGLES);
-			glVertex3f(it->getX(), it->getY(), it->getZ());
-			++it;
-			glVertex3f(it->getX(), it->getY(), it->getZ());
-			++it;
-			glVertex3f(it->getX(), it->getY(), it->getZ());
-			++it;
-			glEnd();
-		}
-		*/
+        for (Models& model : grupo->modelos) {
+            Color c = model.getColor();
+            float amb[3], diff[3], spec[3], emiss[3];
+            c.getAmbient(amb);
+            c.getDiffuse(diff);
+            c.getSpecular(spec);
+            c.getEmissive(emiss);
+            float shininess = c.shininess;
 
-		glBindBuffer(GL_ARRAY_BUFFER, vertices);
-		glVertexPointer(3, GL_FLOAT, 0, 0);
-		glDrawArrays(GL_TRIANGLES, 0, verticeCount);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
+            glMaterialfv(GL_FRONT, GL_EMISSION, emiss);
+            glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 
-		draw(grupo->getSubgroups());
-		glPopMatrix();
+            string tex = model.getTexture();
+            if (!tex.empty()) {
+                GLuint texID;
+                if (texturesMap.find(tex) != texturesMap.end()) {
+                    texID = texturesMap[tex];
+                } else {
+                    texID = loadTexture(tex);
+                    texturesMap[tex] = texID;
+                }
+
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, texID);
+                glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            } else {
+                glDisable(GL_TEXTURE_2D);
+            }
+
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_NORMAL_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+            glBindBuffer(GL_ARRAY_BUFFER, model.getVertices());
+            glVertexPointer(3, GL_FLOAT, 0, 0);
+
+            glBindBuffer(GL_ARRAY_BUFFER, model.getNormals());
+            glNormalPointer(GL_FLOAT, 0, 0);
+
+            glBindBuffer(GL_ARRAY_BUFFER, model.getTexCoords());
+            glTexCoordPointer(2, GL_FLOAT, 0, 0);
+
+            glDrawArrays(GL_TRIANGLES, 0, model.getVertexCount());
+
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+
+        draw(grupo->getSubgroups());
+
+        glPopMatrix();
     }
 }
+
 
 void eixos() {
 	glBegin(GL_LINES);
@@ -488,6 +705,66 @@ void changeSize(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void createLights() {
+	if (lightsVector.empty()) {
+        glDisable(GL_LIGHTING);  
+        return;
+    }
+
+	glEnable(GL_LIGHTING);
+    float globalAmbient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };  // sem luz ambiente global
+    float lightAmbient[4]  = { 0.2f, 0.2f, 0.2f, 1.0f };  // ambiente base
+    float lightDiffuse[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };  // luz branca
+    float lightSpecular[4] = { 1.0f, 1.0f, 1.0f, 1.0f };  // brilho branco
+
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
+
+    for (int i = 0; i < lightsVector.size(); i++) {
+        GLenum lightID = GL_LIGHT0 + i;
+        Light& l = lightsVector[i];
+
+        glEnable(lightID);
+
+        glLightfv(lightID, GL_AMBIENT,  lightAmbient);
+        glLightfv(lightID, GL_DIFFUSE,  lightDiffuse);
+        glLightfv(lightID, GL_SPECULAR, lightSpecular);
+
+        float position[4];
+		float posDir[4];
+        float direction[3];
+		
+		//DIRECTIONAL
+        if (l.getType() == "directional") {
+            l.getDir(direction);
+            posDir[0] = direction[0];
+            posDir[1] = direction[1];
+            posDir[2] = direction[2];
+            posDir[3] = 0.0f;
+            glLightfv(lightID, GL_POSITION, posDir);
+        }
+
+		//POINT
+        else if (l.getType() == "point") {
+            l.getPos(position);
+            position[3] = 1.0f;
+            glLightfv(lightID, GL_POSITION, position);
+        }
+
+		//SPOTLIGHT
+        else if (l.getType() == "spot") {
+            l.getPos(position);
+            l.getDir(direction);
+            float cutoff = l.getCutoff();
+
+            position[3] = 1.0f;
+            glLightfv(lightID, GL_POSITION, position);
+            glLightfv(lightID, GL_SPOT_DIRECTION, direction);
+            glLightf(lightID, GL_SPOT_CUTOFF, cutoff); // ângulo de abertura do cone
+        }
+    }
+}
+
+
 void renderScene(void) {
 
 	frame++;
@@ -512,12 +789,17 @@ void renderScene(void) {
 	gluLookAt(camX,camY,camZ,
 		lookX,lookY,lookZ,
 		upX, upY, upZ);
-
+	
+	createLights();
+	
 	glColor3f(1.0f, 1.0f, 1.0f);
 		
+
 	draw(mainGrupos);
 	
-	eixos();
+	glDisable(GL_LIGHTING);
+    eixos();
+    glEnable(GL_LIGHTING);
 	
 	// End of frame
 	glutSwapBuffers();
@@ -581,7 +863,7 @@ void processMouseButtons(int button, int state, int x, int y){
 			}
 			else if (modoRato == 2) { 
 				r -= y - yInicial;
-				if (r < 3) r = 3.0;
+				if (r < 3) r = 2.0;
 			}
 			break;
 	}
@@ -618,7 +900,16 @@ void processMouseMotion(int x, int y){
 	camY = rAux * sin(betaAux * M_PI / 180.0);
 }
 
+void init() {
+    glEnable(GL_RESCALE_NORMAL);
+    glShadeModel(GL_SMOOTH);
 
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    ilInit();
+}
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
@@ -628,14 +919,16 @@ int main(int argc, char** argv) {
     glutCreateWindow("CG@DI-UM");
 
 	glewInit();
-	
-    if (argc == 2) {
-		readXML(argv[1]);
+    
+	if (argc == 2) {
+        readXML(argv[1]);
     }
     else {
-		readXML("test_1_5.xml");
+        readXML("test_1_5.xml");
     }
-	
+
+    init(); 
+
     glutDisplayFunc(renderScene);
     glutReshapeFunc(changeSize);
     glutIdleFunc(renderScene);
@@ -643,10 +936,6 @@ int main(int argc, char** argv) {
     glutMouseFunc(processMouseButtons);
     glutMotionFunc(processMouseMotion);
     glutKeyboardFunc(processKeys);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
 
     glutMainLoop();
 

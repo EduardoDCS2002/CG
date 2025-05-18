@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -Wall
-LDFLAGS = -lGL -lGLU -lglut -lGLEW
+LDFLAGS = -lGL -lGLU -lglut -lGLEW -lIL -lILU -lILUT
 
 # Source files and object files
 GENERATOR_SRC = Generator/generator.cpp

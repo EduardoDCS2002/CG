@@ -1,99 +1,195 @@
 #include "generator.hpp"
 //0- 0.5*length, 0, 0.5*length ----->>>>
 void plane(float length,int divisions, char* file){
-	//nrvertices
-	//spamar os vertices todos
-	//comprimento do lado
-	//nr divisões
 	FILE *fd = fopen(file,"w+");
 	int vertices = divisions * divisions * 2 * 3 * 2;
 	fprintf(fd,"%d\n",vertices);
 	float espacamento = length/((float)divisions);
 	float ponto1[3];
+	std::vector<Ponto> vertex;
+    std::vector<Ponto> normals;
+    std::vector<Ponto> texture;
 	for(int i=0; i < divisions;i++){
 		for(int j=0;j<divisions;j++){
 			ponto1[0] = -0.5 * length + j * espacamento;
 			ponto1[1] = 0;
 			ponto1[2] = 0.5 * length - i * espacamento;
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1], ponto1[2]);
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]);
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
 
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1],ponto1[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1],ponto1[2]);
+			vertex.emplace_back(ponto1[0], ponto1[1], ponto1[2]);
+			vertex.emplace_back(ponto1[0]+espacamento,ponto1[1],ponto1[2]);
+			vertex.emplace_back(ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
 
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]);
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1], ponto1[2]);
+			texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+			texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+			texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
 
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1],ponto1[2]);
-			fprintf(fd, "%f %f %f\n",ponto1[0],ponto1[1],ponto1[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
+			vertex.emplace_back(ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
+			vertex.emplace_back(ponto1[0],ponto1[1],ponto1[2]-espacamento);
+			vertex.emplace_back(ponto1[0],ponto1[1],ponto1[2]);
+
+			texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+			texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+			texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+
+			for (int k = 0; k < 6; ++k)
+                normals.emplace_back(0.0f, 1.0f, 0.0f);
+
+			//parte de baixo
+			vertex.emplace_back(ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
+			vertex.emplace_back(ponto1[0]+espacamento,ponto1[1],ponto1[2]);
+			vertex.emplace_back(ponto1[0],ponto1[1],ponto1[2]);
+
+			texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+			texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+			texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+
+			vertex.emplace_back(ponto1[0],ponto1[1],ponto1[2]);
+			vertex.emplace_back(ponto1[0],ponto1[1],ponto1[2]-espacamento);
+			vertex.emplace_back(ponto1[0]+espacamento,ponto1[1],ponto1[2]-espacamento);
+
+			texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+			texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+			texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+
+			for (int k = 0; k < 6; ++k)
+                normals.emplace_back(0.0f, -1.0f, 0.0f);
 		}	
 	}
+
+    for (auto& v : vertex)
+        fprintf(fd, "%f %f %f\n", v.getX(), v.getY(), v.getZ());
+
+    for (auto& n : normals)
+        fprintf(fd, "%f %f %f\n", n.getX(), n.getY(), n.getZ());
+
+    for (auto& t : texture)
+        fprintf(fd, "%f %f\n", t.getX(), t.getY());
 	fclose(fd);
 }
 
-void sphere(float radius, int slices, int stacks, char* file){
-	FILE *fd = fopen(file,"w+");
-	int vertices = slices * (6 + (stacks * 6));  
-	fprintf(fd, "%d\n", vertices );
 
-	float lat = 2 * M_PI / slices;
-	float lon = M_PI / stacks;
+void sphere(float radius, int slices, int stacks, char* file) {
+    FILE* fd = fopen(file, "w+");
+    int vertices = slices * (6 + (stacks * 6));
+    fprintf(fd, "%d\n", vertices);
 
-	for(int j=0;j<slices;j++){
-		float currentlat = j * lat;
-		
-		//cima
-		fprintf(fd, "%f %f %f\n",radius * cos(M_PI / 2) * sin(currentlat),					radius * sin(M_PI / 2),				radius * cos(M_PI /2) * cos(currentlat));
-		fprintf(fd, "%f %f %f\n",radius * cos(M_PI / 2 - lon) * sin(currentlat),			radius * sin((M_PI / 2) - lon),		radius * cos((M_PI / 2) - lon) * cos(currentlat));
-		fprintf(fd, "%f %f %f\n",radius * cos(M_PI / 2 - lon) * sin(currentlat + lat),		radius * sin((M_PI / 2) - lon),		radius * cos((M_PI / 2) - lon) * cos(currentlat + lat));
+    std::vector<Ponto> vertex;
+    std::vector<Ponto> normals;
+    std::vector<Ponto> texture;
 
-		//baixo
-		fprintf(fd, "%f %f %f\n",radius * cos(-M_PI / 2) * sin(currentlat),					radius * sin(-M_PI / 2),			radius * cos(-M_PI /2) * cos(currentlat));
-		fprintf(fd, "%f %f %f\n",radius * cos((-M_PI / 2) + lon) * sin(currentlat + lat),	radius * sin((-M_PI / 2) + lon),	radius * cos((-M_PI / 2) + lon) * cos(currentlat + lat));
-		fprintf(fd, "%f %f %f\n",radius * cos((-M_PI / 2) + lon) * sin(currentlat),			radius * sin((-M_PI / 2) + lon),	radius * cos((-M_PI / 2) + lon) * cos(currentlat));
-		for(int i=0;i<stacks;i++){
-			float currentlon = M_PI / 2 - (i * lon);	
-			
-			fprintf(fd, "%f %f %f\n",radius * cos(currentlon) * sin(currentlat),			radius * sin(currentlon),			radius * cos(currentlon) * cos(currentlat));
-			fprintf(fd, "%f %f %f\n",radius * cos(currentlon - lon) * sin(currentlat),		radius * sin(currentlon - lon),		radius * cos(currentlon - lon) * cos(currentlat));
-			fprintf(fd, "%f %f %f\n",radius * cos(currentlon) * sin(currentlat + lat),		radius * sin(currentlon),			radius * cos(currentlon) * cos(currentlat + lat));
+    float lat = 2 * M_PI / slices;
+    float lon = M_PI / stacks;
 
-			fprintf(fd, "%f %f %f\n",radius * cos(currentlon - lon) * sin(currentlat),		radius * sin(currentlon - lon),		radius * cos(currentlon-lon) * cos(currentlat));
-			fprintf(fd, "%f %f %f\n",radius * cos(currentlon - lon) * sin(currentlat+lat),	radius * sin(currentlon - lon),		radius * cos(currentlon - lon) * cos(currentlat + lat));
-			fprintf(fd, "%f %f %f\n",radius * cos(currentlon) * sin(currentlat + lat),		radius * sin(currentlon),			radius * cos(currentlon) * cos(currentlat+lat));
-		}
-	}
-	fclose(fd);
+    for (int j = 0; j < slices; j++) {
+        float currentlat = j * lat;
+
+        // cima
+        vertex.emplace_back(radius * cos(M_PI / 2) * sin(currentlat), radius * sin(M_PI / 2), radius * cos(M_PI / 2) * cos(currentlat));
+        normals.emplace_back(cos(M_PI / 2) * sin(currentlat), sin(M_PI / 2), cos(M_PI / 2) * cos(currentlat));
+        texture.emplace_back((float)j / slices, 1.0f - 0.0f, 0);
+
+        vertex.emplace_back(radius * cos(M_PI / 2 - lon) * sin(currentlat), radius * sin(M_PI / 2 - lon), radius * cos(M_PI / 2 - lon) * cos(currentlat));
+        normals.emplace_back(cos(M_PI / 2 - lon) * sin(currentlat), sin(M_PI / 2 - lon), cos(M_PI / 2 - lon) * cos(currentlat));
+        texture.emplace_back((float)j / slices, 1.0f - (1.0f / stacks), 0);
+
+        vertex.emplace_back(radius * cos(M_PI / 2 - lon) * sin(currentlat + lat), radius * sin(M_PI / 2 - lon), radius * cos(M_PI / 2 - lon) * cos(currentlat + lat));
+        normals.emplace_back(cos(M_PI / 2 - lon) * sin(currentlat + lat), sin(M_PI / 2 - lon), cos(M_PI / 2 - lon) * cos(currentlat + lat));
+        texture.emplace_back((float)(j + 1) / slices, 1.0f - (1.0f / stacks), 0);
+
+        // baixo
+        vertex.emplace_back(radius * cos(-M_PI / 2) * sin(currentlat), radius * sin(-M_PI / 2), radius * cos(-M_PI / 2) * cos(currentlat));
+        normals.emplace_back(cos(-M_PI / 2) * sin(currentlat), sin(-M_PI / 2), cos(-M_PI / 2) * cos(currentlat));
+        texture.emplace_back((float)j / slices, 1.0f - 1.0f, 0);
+
+        vertex.emplace_back(radius * cos(-M_PI / 2 + lon) * sin(currentlat + lat), radius * sin(-M_PI / 2 + lon), radius * cos(-M_PI / 2 + lon) * cos(currentlat + lat));
+        normals.emplace_back(cos(-M_PI / 2 + lon) * sin(currentlat + lat), sin(-M_PI / 2 + lon), cos(-M_PI / 2 + lon) * cos(currentlat + lat));
+        texture.emplace_back((float)(j + 1) / slices, 1.0f - (1.0f - 1.0f / stacks), 0);
+
+        vertex.emplace_back(radius * cos(-M_PI / 2 + lon) * sin(currentlat), radius * sin(-M_PI / 2 + lon), radius * cos(-M_PI / 2 + lon) * cos(currentlat));
+        normals.emplace_back(cos(-M_PI / 2 + lon) * sin(currentlat), sin(-M_PI / 2 + lon), cos(-M_PI / 2 + lon) * cos(currentlat));
+        texture.emplace_back((float)j / slices, 1.0f - (1.0f - 1.0f / stacks), 0);
+
+        // stacks do meio
+        for (int i = 0; i < stacks; i++) {
+            float currentlon = M_PI / 2 - (i * lon);
+
+            vertex.emplace_back(radius * cos(currentlon) * sin(currentlat), radius * sin(currentlon), radius * cos(currentlon) * cos(currentlat));
+            normals.emplace_back(cos(currentlon) * sin(currentlat), sin(currentlon), cos(currentlon) * cos(currentlat));
+            texture.emplace_back((float)j / slices, 1.0f - (float)i / stacks, 0);
+
+            vertex.emplace_back(radius * cos(currentlon - lon) * sin(currentlat), radius * sin(currentlon - lon), radius * cos(currentlon - lon) * cos(currentlat));
+            normals.emplace_back(cos(currentlon - lon) * sin(currentlat), sin(currentlon - lon), cos(currentlon - lon) * cos(currentlat));
+            texture.emplace_back((float)j / slices, 1.0f - (float)(i + 1) / stacks, 0);
+
+            vertex.emplace_back(radius * cos(currentlon) * sin(currentlat + lat), radius * sin(currentlon), radius * cos(currentlon) * cos(currentlat + lat));
+            normals.emplace_back(cos(currentlon) * sin(currentlat + lat), sin(currentlon), cos(currentlon) * cos(currentlat + lat));
+            texture.emplace_back((float)(j + 1) / slices, 1.0f - (float)i / stacks, 0);
+
+            vertex.emplace_back(radius * cos(currentlon - lon) * sin(currentlat), radius * sin(currentlon - lon), radius * cos(currentlon - lon) * cos(currentlat));
+            normals.emplace_back(cos(currentlon - lon) * sin(currentlat), sin(currentlon - lon), cos(currentlon - lon) * cos(currentlat));
+            texture.emplace_back((float)j / slices, 1.0f - (float)(i + 1) / stacks, 0);
+
+            vertex.emplace_back(radius * cos(currentlon - lon) * sin(currentlat + lat), radius * sin(currentlon - lon), radius * cos(currentlon - lon) * cos(currentlat + lat));
+            normals.emplace_back(cos(currentlon - lon) * sin(currentlat + lat), sin(currentlon - lon), cos(currentlon - lon) * cos(currentlat + lat));
+            texture.emplace_back((float)(j + 1) / slices, 1.0f - (float)(i + 1) / stacks, 0);
+
+            vertex.emplace_back(radius * cos(currentlon) * sin(currentlat + lat), radius * sin(currentlon), radius * cos(currentlon) * cos(currentlat + lat));
+            normals.emplace_back(cos(currentlon) * sin(currentlat + lat), sin(currentlon), cos(currentlon) * cos(currentlat + lat));
+            texture.emplace_back((float)(j + 1) / slices, 1.0f - (float)i / stacks, 0);
+        }
+    }
+
+    for (auto& v : vertex) 
+		fprintf(fd, "%f %f %f\n", v.getX(), v.getY(), v.getZ());
+
+    for (auto& n : normals) 
+		fprintf(fd, "%f %f %f\n", n.getX(), n.getY(), n.getZ());
+
+    for (auto& t : texture) 
+		fprintf(fd, "%f %f\n", t.getX(), t.getY());
+
+    fclose(fd);
 }
+
+
+
+// plane() e sphere() já atualizadas
 
 void box(float dimension, int divisions, char* file){
-	//requires dimension, and the number of divisions per edge, centred in the origin
-	//nrvertices
-	//vertices
 	FILE *fd = fopen(file, "w+");
 	int vertices = divisions * divisions * 2 * 3 * 6;
 	fprintf(fd,"%d\n",vertices);
 	float espacamento = dimension/((float)divisions);
 	float ponto[3];
-	//planos no xy
+	std::vector<Ponto> vertex;
+    std::vector<Ponto> normals;
+    std::vector<Ponto> texture;
+
+	// planos no xy
 	for(int i=0; i<divisions;i++){
 		for(int j=0;j<divisions;j++){
 			ponto[0] = -0.5 * dimension + j * espacamento;
 			ponto[1] = 0.5 * dimension - i * espacamento;
 			ponto[2] = -(dimension/2);
-			
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
 
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]-espacamento,ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
-			
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1]-espacamento, ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]);
+
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1]-espacamento, ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1]-espacamento, ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+
+            for (int k = 0; k < 6; k++)
+                normals.emplace_back(0.0f, 0.0f, -1.0f);
 		}
 	}
 	for(int i=0; i<divisions;i++){
@@ -102,155 +198,281 @@ void box(float dimension, int divisions, char* file){
 			ponto[1] = 0.5 * dimension - i * espacamento;
 			ponto[2] = (dimension/2);
 
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1]-espacamento, ponto[2]);
 
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]-espacamento,ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1]-espacamento,ponto[2]);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1]-espacamento, ponto[2]);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1]-espacamento, ponto[2]);
+
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+
+            for (int k = 0; k < 6; k++)
+                normals.emplace_back(0.0f, 0.0f, 1.0f);
 		}
 	}
-	
-	//planos no xz
-	for(int i=0; i < divisions;i++){	//RIGHT
+	// planos no xz inferior
+	for(int i=0; i<divisions;i++){
 		for(int j=0;j<divisions;j++){
 			ponto[0] = -0.5 * dimension + j * espacamento;
 			ponto[1] = -(dimension/2);
 			ponto[2] = 0.5 * dimension - i * espacamento;
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
 
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]-espacamento);
+
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]-espacamento);
+
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+
+            for (int k = 0; k < 6; k++)
+                normals.emplace_back(0.0f, -1.0f, 0.0f);
 		}
 	}
-	for(int i=0; i < divisions;i++){
+	// planos no xz superior
+	for(int i=0; i<divisions;i++){
 		for(int j=0;j<divisions;j++){
 			ponto[0] = -0.5 * dimension + j * espacamento;
 			ponto[1] = dimension/2;
 			ponto[2] = 0.5 * dimension - i * espacamento;
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]);
 
-			fprintf(fd, "%f %f %f\n",ponto[0]+espacamento,ponto[1],ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]);
 
-		}	
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+
+            vertex.emplace_back(ponto[0]+espacamento, ponto[1], ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+
+            for (int k = 0; k < 6; k++)
+                normals.emplace_back(0.0f, 1.0f, 0.0f);
+		}
 	}
-	//planos no yz
-	for(int i=0; i < divisions;i++){
+	// planos no yz esquerdo
+	for(int i=0; i<divisions;i++){
 		for(int j=0;j<divisions;j++){
 			ponto[0] = -(dimension/2);
 			ponto[1] = -0.5 * dimension + j * espacamento;
 			ponto[2] = 0.5 * dimension - i * espacamento;
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]);
 
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1]+espacamento, ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1]+espacamento, ponto[2]);
 
-		}	
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+
+            vertex.emplace_back(ponto[0], ponto[1]+espacamento, ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+
+            for (int k = 0; k < 6; k++)
+                normals.emplace_back(-1.0f, 0.0f, 0.0f);
+		}
 	}
-	for(int i=0; i < divisions;i++){
+	// planos no yz direito
+	for(int i=0; i<divisions;i++){
 		for(int j=0;j<divisions;j++){
 			ponto[0] = (dimension/2);
 			ponto[1] = -0.5 * dimension + j * espacamento;
 			ponto[2] = 0.5 * dimension - i * espacamento;
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1], ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
 
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1],ponto[2]-espacamento);
-			fprintf(fd, "%f %f %f\n",ponto[0],ponto[1]+espacamento,ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1]+espacamento, ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1]+espacamento, ponto[2]-espacamento);
 
-		}	
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]);
+            vertex.emplace_back(ponto[0], ponto[1], ponto[2]-espacamento);
+            vertex.emplace_back(ponto[0], ponto[1]+espacamento, ponto[2]-espacamento);
+
+            texture.emplace_back((float)j / divisions, 1.0f - (float)i / divisions, 0);
+            texture.emplace_back((float)j / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+            texture.emplace_back((float)(j + 1) / divisions, 1.0f - (float)(i + 1) / divisions, 0);
+
+            for (int k = 0; k < 6; k++)
+                normals.emplace_back(1.0f, 0.0f, 0.0f);
+		}
 	}
+
+    for (auto& v : vertex)
+        fprintf(fd, "%f %f %f\n", v.getX(), v.getY(), v.getZ());
+
+    for (auto& n : normals)
+        fprintf(fd, "%f %f %f\n", n.getX(), n.getY(), n.getZ());
+
+    for (auto& t : texture)
+        fprintf(fd, "%f %f\n", t.getX(), t.getY());
+
 	fclose(fd);
 }
 
+
 void cone(float radius, float height, int slices, int stacks, char *file){
-	//nrvertices
 	int vertices = 6 * stacks * slices + 3 * slices;
 	FILE *fd = fopen(file, "w+");
 	fprintf(fd,"%d\n", vertices);
 	float angle = 2 * M_PI / slices;
 	float height_change = height / stacks;
     float radius_change = radius / stacks;
-	//faces
+	std::vector<Ponto> vertex;
+	std::vector<Ponto> normals;
+	std::vector<Ponto> texture;
+	
 	for (int i = 0; i < stacks; i++) {
         float current_height = height - height_change * i;
         float current_radius = i * radius_change;
         for (int j = 0; j < slices; j++) {
-			fprintf(fd, "%f %f %f\n",current_radius * sin(angle * j),current_height,current_radius * cos(angle * j));
-			fprintf(fd, "%f %f %f\n",(current_radius+radius_change) * sin(angle * j),current_height-height_change,(current_radius+radius_change) * cos(angle * j));
-			fprintf(fd, "%f %f %f\n",(current_radius+radius_change) * sin(angle * (j+1)),current_height-height_change,(current_radius+radius_change) * cos(angle * (j+1)));
+			vertex.emplace_back(current_radius * sin(angle * j), current_height, current_radius * cos(angle * j));
+			vertex.emplace_back((current_radius+radius_change) * sin(angle * j), current_height - height_change, (current_radius+radius_change) * cos(angle * j));
+			vertex.emplace_back((current_radius+radius_change) * sin(angle * (j+1)), current_height - height_change, (current_radius+radius_change) * cos(angle * (j+1)));
+			
+			texture.emplace_back((float)j / slices, 1.0f - (float)i / stacks, 0);
+			texture.emplace_back((float)j / slices, 1.0f - (float)(i + 1) / stacks, 0);
+			texture.emplace_back((float)(j + 1) / slices, 1.0f - (float)(i + 1) / stacks, 0);
 
-			fprintf(fd, "%f %f %f\n",current_radius * sin(angle * j),current_height,current_radius * cos(angle * j));
-			fprintf(fd, "%f %f %f\n",(current_radius+radius_change) * sin(angle * (j+1)),current_height-height_change,(current_radius+radius_change) * cos(angle * (j+1)));
-			fprintf(fd, "%f %f %f\n",current_radius * sin(angle * (j+1)),current_height,current_radius * cos(angle * (j+1)));
+			vertex.emplace_back(current_radius * sin(angle * j), current_height, current_radius * cos(angle * j));
+			vertex.emplace_back((current_radius+radius_change) * sin(angle * (j+1)), current_height - height_change, (current_radius+radius_change) * cos(angle * (j+1)));
+			vertex.emplace_back(current_radius * sin(angle * (j+1)), current_height, current_radius * cos(angle * (j+1)));
+
+			texture.emplace_back((float)j / slices, 1.0f - (float)i / stacks, 0);
+			texture.emplace_back((float)(j + 1) / slices, 1.0f - (float)(i + 1) / stacks, 0);
+			texture.emplace_back((float)(j + 1) / slices, 1.0f - (float)i / stacks, 0);
+
+			for (int k = 6; k > 0; k--) {
+				Ponto& v = vertex[vertex.size() - k];
+				float x = v.getX();
+				float y = radius / height;
+				float z = v.getZ();
+				float len = sqrt(x * x + y * y + z * z);
+				normals.emplace_back(x / len, y / len, z / len);
+			}
         }
     }
-	//circunferencia
+
+	// base
 	for(int i = 0;i < slices; i++){
-		fprintf(fd, "%f %f %f\n",radius * sin(angle * i),0.0,radius * cos(angle * i));
-		fprintf(fd, "%f %f %f\n",0.0,0.0,0.0);
-		fprintf(fd, "%f %f %f\n",radius * sin(angle * (i+1)),0.0,radius * cos(angle * (i+1)));
+		vertex.emplace_back(radius * sin(angle * i), 0.0f, radius * cos(angle * i));
+		vertex.emplace_back(0.0f, 0.0f, 0.0f);
+		vertex.emplace_back(radius * sin(angle * (i+1)), 0.0f, radius * cos(angle * (i+1)));
+
+		texture.emplace_back(0.5f + 0.5f * sin(angle * i), 1.0f - (0.5f + 0.5f * cos(angle * i)), 0);
+		texture.emplace_back(0.5f, 1.0f - 0.5f, 0);
+		texture.emplace_back(0.5f + 0.5f * sin(angle * (i+1)), 1.0f - (0.5f + 0.5f * cos(angle * (i+1))), 0);
+
+		for (int j = 0; j < 3; j++)
+			normals.emplace_back(0.0f, -1.0f, 0.0f);
 	}
+
+	for (auto& v : vertex)
+		fprintf(fd, "%f %f %f\n", v.getX(), v.getY(), v.getZ());
+
+	for (auto& n : normals)
+		fprintf(fd, "%f %f %f\n", n.getX(), n.getY(), n.getZ());
+
+	for (auto& t : texture)
+		fprintf(fd, "%f %f\n", t.getX(), t.getY());
+
+	fclose(fd);
 }
 
-void torus(float inner_radius, float outer_radius, int slices, int rings, char *file) {
-    int vertices = 6 * slices * rings;
-    FILE *fd = fopen(file, "w+");
-    fprintf(fd, "%d\n", vertices);
+// plane(), sphere(), box() e cone() já atualizadas
 
-    float ring_step = 2 * M_PI / rings;
-    float slice_step = 2 * M_PI / slices;
+void torus(float innerRadius, float outerRadius, int slices, int stacks, char* file) {
+	FILE* fd = fopen(file, "w+");
+	int vertices = slices * stacks * 6;
+	fprintf(fd, "%d\n", vertices);
 
-    for (int i = 0; i < rings; i++) {
-        float ring_angle = i * ring_step;
-        float next_ring_angle = (i + 1) * ring_step;
+	std::vector<Ponto> vertex;
+	std::vector<Ponto> normals;
+	std::vector<Ponto> texture;
 
-        for (int j = 0; j < slices; j++) {
-            float slice_angle = j * slice_step;
-            float next_slice_angle = (j + 1) * slice_step;
+	float alpha = 2 * M_PI / slices;
+	float beta = 2 * M_PI / stacks;
+	float r = (outerRadius - innerRadius) / 2.0f;
+	float c = innerRadius + r;
 
-            // First triangle
-            float x1 = (outer_radius + inner_radius * cos(slice_angle)) * cos(ring_angle);
-            float y1 = inner_radius * sin(slice_angle);
-            float z1 = (outer_radius + inner_radius * cos(slice_angle)) * sin(ring_angle);
+	for (int i = 0; i < slices; i++) {
+		float currentAlpha = i * alpha;
+		float nextAlpha = (i + 1) * alpha;
 
-            float x2 = (outer_radius + inner_radius * cos(slice_angle)) * cos(next_ring_angle);
-            float y2 = inner_radius * sin(slice_angle);
-            float z2 = (outer_radius + inner_radius * cos(slice_angle)) * sin(next_ring_angle);
+		for (int j = 0; j < stacks; j++) {
+			float currentBeta = j * beta;
+			float nextBeta = (j + 1) * beta;
 
-            float x3 = (outer_radius + inner_radius * cos(next_slice_angle)) * cos(next_ring_angle);
-            float y3 = inner_radius * sin(next_slice_angle);
-            float z3 = (outer_radius + inner_radius * cos(next_slice_angle)) * sin(next_ring_angle);
+			Ponto p1((c + r * cos(currentBeta)) * cos(currentAlpha), r * sin(currentBeta), (c + r * cos(currentBeta)) * sin(currentAlpha));
+			Ponto p2((c + r * cos(currentBeta)) * cos(nextAlpha), r * sin(currentBeta), (c + r * cos(currentBeta)) * sin(nextAlpha));
+			Ponto p3((c + r * cos(nextBeta)) * cos(nextAlpha), r * sin(nextBeta), (c + r * cos(nextBeta)) * sin(nextAlpha));
+			Ponto p4((c + r * cos(nextBeta)) * cos(currentAlpha), r * sin(nextBeta), (c + r * cos(nextBeta)) * sin(currentAlpha));
 
-            // Second triangle
-            float x4 = (outer_radius + inner_radius * cos(next_slice_angle)) * cos(ring_angle);
-            float y4 = inner_radius * sin(next_slice_angle);
-            float z4 = (outer_radius + inner_radius * cos(next_slice_angle)) * sin(ring_angle);
+			vertex.push_back(p1);
+			vertex.push_back(p2);
+			vertex.push_back(p3);
 
-            
-            fprintf(fd, "%f %f %f\n", x1, y1, z1);
-            fprintf(fd, "%f %f %f\n", x3, y3, z3);
-            fprintf(fd, "%f %f %f\n", x2, y2, z2);
+			vertex.push_back(p1);
+			vertex.push_back(p3);
+			vertex.push_back(p4);
 
-            fprintf(fd, "%f %f %f\n", x1, y1, z1);
-            fprintf(fd, "%f %f %f\n", x4, y4, z4);
-            fprintf(fd, "%f %f %f\n", x3, y3, z3);
-        }
-    }
+			normals.push_back(Ponto(cos(currentBeta) * cos(currentAlpha), sin(currentBeta), cos(currentBeta) * sin(currentAlpha)).normalize());
+			normals.push_back(Ponto(cos(currentBeta) * cos(nextAlpha), sin(currentBeta), cos(currentBeta) * sin(nextAlpha)).normalize());
+			normals.push_back(Ponto(cos(nextBeta) * cos(nextAlpha), sin(nextBeta), cos(nextBeta) * sin(nextAlpha)).normalize());
+
+			normals.push_back(Ponto(cos(currentBeta) * cos(currentAlpha), sin(currentBeta), cos(currentBeta) * sin(currentAlpha)).normalize());
+			normals.push_back(Ponto(cos(nextBeta) * cos(nextAlpha), sin(nextBeta), cos(nextBeta) * sin(nextAlpha)).normalize());
+			normals.push_back(Ponto(cos(nextBeta) * cos(currentAlpha), sin(nextBeta), cos(nextBeta) * sin(currentAlpha)).normalize());
+
+			texture.emplace_back((float)i / slices, 1.0f - (float)j / stacks, 0);
+			texture.emplace_back((float)(i + 1) / slices, 1.0f - (float)j / stacks, 0);
+			texture.emplace_back((float)(i + 1) / slices, 1.0f - (float)(j + 1) / stacks, 0);
+
+			texture.emplace_back((float)i / slices, 1.0f - (float)j / stacks, 0);
+			texture.emplace_back((float)(i + 1) / slices, 1.0f - (float)(j + 1) / stacks, 0);
+			texture.emplace_back((float)i / slices, 1.0f - (float)(j + 1) / stacks, 0);
+		}
+	}
+
+	for (auto& v : vertex)
+		fprintf(fd, "%f %f %f\n", v.getX(), v.getY(), v.getZ());
+	for (auto& n : normals)
+		fprintf(fd, "%f %f %f\n", n.getX(), n.getY(), n.getZ());
+	for (auto& t : texture)
+		fprintf(fd, "%f %f\n", t.getX(), t.getY());
+
+	fclose(fd);
 }
+
 
 float bernstein(int i, float t) {
     switch(i) {
@@ -280,9 +502,12 @@ Ponto bezierPatchEval(const std::vector<Ponto>& cp, float u, float v) {
     return p;
 }
 
+// plane(), sphere(), box(), cone() e torus() já atualizadas
+
 void bezier(char* file_in, int tessellation, char* file_out) {
     std::ifstream infile(file_in);
-    std::ofstream outfile(file_out);
+    FILE* outfile = fopen(file_out, "w+");
+
     std::vector<std::vector<int>> patches;
     std::vector<Ponto> controlPoints;
 
@@ -290,45 +515,30 @@ void bezier(char* file_in, int tessellation, char* file_out) {
     infile >> patchCount;
 
     for (int i = 0; i < patchCount; ++i) {
-		std::string line;
-		std::getline(infile >> std::ws, line); // lê linha, ignorando espaços em branco
-		for (char& c : line) {
-			if (c == ',') c = ' ';
-		}
-		std::stringstream ss(line);
-		std::vector<int> patch(16);
-		for (int j = 0; j < 16; ++j) {
-			ss >> patch[j];
-		}
-		patches.push_back(patch);
-	}
-	
+        std::string line;
+        std::getline(infile >> std::ws, line);
+        for (char& c : line) if (c == ',') c = ' ';
+        std::stringstream ss(line);
+        std::vector<int> patch(16);
+        for (int j = 0; j < 16; ++j) ss >> patch[j];
+        patches.push_back(patch);
+    }
 
     std::string line;
-	while (std::getline(infile, line)) {
-		for (char& c : line) {
-			if (c == ',') c = ' ';
-		}
-		std::stringstream ss(line);
-		float x, y, z;
-		if (ss >> x >> y >> z) {
-			controlPoints.emplace_back(x, y, z);
-		}
-	}
+    while (std::getline(infile, line)) {
+        for (char& c : line) if (c == ',') c = ' ';
+        std::stringstream ss(line);
+        float x, y, z;
+        if (ss >> x >> y >> z) controlPoints.emplace_back(x, y, z);
+    }
 
     std::vector<Ponto> vertices;
+    std::vector<Ponto> normals;
+    std::vector<Ponto> textures;
 
     for (const auto& patch : patches) {
         std::vector<Ponto> patchPoints;
-        for (int idx : patch) {
-			if (idx < 0 || idx >= (int)controlPoints.size()) {
-				std::cerr << " Erro: índice fora do intervalo: " << idx
-						  << " (tamanho dos pontos: " << controlPoints.size() << ")\n";
-				exit(EXIT_FAILURE);
-			}
-			patchPoints.push_back(controlPoints[idx]);
-		}
-		
+        for (int idx : patch) patchPoints.push_back(controlPoints[idx]);
 
         for (int i = 0; i < tessellation; ++i) {
             float u = (float)i / tessellation;
@@ -342,27 +552,43 @@ void bezier(char* file_in, int tessellation, char* file_out) {
                 Ponto p3 = bezierPatchEval(patchPoints, u, v_next);
                 Ponto p4 = bezierPatchEval(patchPoints, u_next, v_next);
 
-                // Triângulo 1
-                vertices.push_back(p1);
-                vertices.push_back(p4);
-                vertices.push_back(p2);
+                Ponto t1(u, 1.0f - v, 0), t2(u_next, 1.0f - v, 0), t3(u, 1.0f - v_next, 0), t4(u_next, 1.0f - v_next, 0);
 
-                // Triângulo 2
-                vertices.push_back(p1);
-                vertices.push_back(p3);
-                vertices.push_back(p4);
+                // Triangle 1
+                Ponto u1 = p4 - p1;
+                Ponto v1 = p2 - p1;
+                Ponto n1 = u1.cross(v1).normalize();
+
+                vertices.push_back(p1); normals.push_back(n1); textures.push_back(t1);
+                vertices.push_back(p4); normals.push_back(n1); textures.push_back(t4);
+                vertices.push_back(p2); normals.push_back(n1); textures.push_back(t2);
+
+                // Triangle 2
+                Ponto u2 = p3 - p1;
+                Ponto v2 = p4 - p1;
+                Ponto n2 = u2.cross(v2).normalize();
+
+                vertices.push_back(p1); normals.push_back(n2); textures.push_back(t1);
+                vertices.push_back(p3); normals.push_back(n2); textures.push_back(t3);
+                vertices.push_back(p4); normals.push_back(n2); textures.push_back(t4);
             }
         }
     }
 
-    outfile << vertices.size() << "\n";
-    for (Ponto p : vertices) {
-        outfile << p.getX() << " " << p.getY() << " " << p.getZ() << "\n";
-    }
+    fprintf(outfile, "%lu\n", vertices.size());
+    for (const auto& v : vertices) 
+		fprintf(outfile, "%f %f %f\n", v.getX(), v.getY(), v.getZ());
+
+    for (const auto& n : normals) 
+		fprintf(outfile, "%f %f %f\n", n.getX(), n.getY(), n.getZ());
+    for (const auto& t : textures) 
+		fprintf(outfile, "%f %f\n", t.getX(), t.getY());
 
     infile.close();
-    outfile.close();
+    fclose(outfile);
 }
+
+
 
 int main(int argc, char** argv){
 	if(strcmp(argv[1],"plane")==0){

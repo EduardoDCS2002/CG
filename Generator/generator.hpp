@@ -36,15 +36,15 @@ public:
 		z = c;
 	}
 
-	float getX() {
+	float getX() const {
 		return x;
 	}
 
-	float getY() {
+	float getY() const {
 		return y;
 	}
 
-	float getZ() {
+	float getZ() const {
 		return z;
 	}
 
@@ -58,5 +58,28 @@ public:
 
 	void setZ(float c) {
 		z = c;
+	}
+
+	//comprimento do vetor
+	float length() {
+		return sqrt(x * x + y * y + z * z);
+	}
+
+	//
+	Ponto cross(Ponto p) {
+		return Ponto(
+			y * p.getZ() - z * p.getY(),
+			z * p.getX() - x * p.getZ(),
+			x * p.getY() - y * p.getX()
+		);	
+	}
+
+	Ponto normalize() const {
+    float len = sqrt(x*x + y*y + z*z);
+    return (len == 0) ? Ponto(0, 0, 0) : Ponto(x/len, y/len, z/len);
+}
+
+	Ponto operator-(const Ponto& p) const {
+		return Ponto(x - p.x, y - p.y, z - p.z);
 	}
 };
